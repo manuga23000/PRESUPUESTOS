@@ -38,13 +38,14 @@ export default function PresupuestoPrint({ data }: Props) {
       id="print-area"
       style={{
         width: "794px",
-        minHeight: "297mm",
+        minHeight: "1123px",
         backgroundColor: "#ffffff",
         color: DARK,
         fontFamily: "'Arial', 'Helvetica Neue', Helvetica, sans-serif",
         boxSizing: "border-box",
         position: "relative",
-        overflow: "visible",
+        overflow: "hidden",
+        WebkitPrintColorAdjust: "exact",
       }}
     >
       {/* TOP ACCENT BAR */}
@@ -94,7 +95,7 @@ export default function PresupuestoPrint({ data }: Props) {
             <img
               src="/LOGO GTM.png"
               alt="GTM"
-              style={{ height: "130px", width: "auto", display: "block" }}
+              style={{ height: "160px", width: "auto", display: "block" }}
               onError={(e) => {
                 e.currentTarget.style.display = "none";
                 (
@@ -122,7 +123,7 @@ export default function PresupuestoPrint({ data }: Props) {
                   marginTop: "4px",
                 }}
               >
-                MECÁNICA GRANDOLI
+                GRANDOLI TALLER MECÁNICO
               </div>
             </div>
           </div>
@@ -157,7 +158,7 @@ export default function PresupuestoPrint({ data }: Props) {
                 marginTop: "10px",
                 backgroundColor: RED,
                 color: "#fff",
-                fontSize: "14px",
+                fontSize: "18px",
                 fontWeight: 700,
                 letterSpacing: "2px",
                 padding: "5px 16px",
@@ -380,7 +381,7 @@ const thStyle: React.CSSProperties = {
   backgroundColor: DARK,
   color: "#fff",
   padding: "13px 16px",
-  fontSize: "13px",
+  fontSize: "19px",
   fontWeight: 700,
   letterSpacing: "2px",
   borderBottom: `3px solid ${RED}`,
@@ -388,7 +389,7 @@ const thStyle: React.CSSProperties = {
 
 const tdStyle: React.CSSProperties = {
   padding: "12px 16px",
-  fontSize: "16px",
+  fontSize: "22px",
   borderBottom: "1px solid #efefef",
   height: "44px",
   color: "#1a1a1a",

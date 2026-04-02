@@ -320,8 +320,8 @@ export default function PresupuestoPage() {
                     🖨 Imprimir / PDF
                   </button>
                 </div>
-                <div style={{ border: "1px solid #2a2a2a", borderRadius: "4px", width: `${794 * previewScale}px`, height: `${printHeight * previewScale}px`, overflow: "hidden" }}>
-                  <div ref={printRef} style={{ width: "794px", transformOrigin: "top left", transform: `scale(${previewScale})` }}>
+                <div id="print-preview-container" style={{ border: "1px solid #2a2a2a", borderRadius: "4px", width: `${794 * previewScale}px`, height: `${printHeight * previewScale}px`, overflow: "hidden" }}>
+                  <div id="print-scale-wrapper" ref={printRef} style={{ width: "794px", transformOrigin: "top left", transform: `scale(${previewScale})` }}>
                     <PresupuestoPrint data={formData} />
                   </div>
                 </div>

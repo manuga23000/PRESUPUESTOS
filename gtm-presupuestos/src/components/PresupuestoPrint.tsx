@@ -17,7 +17,11 @@ function formatImporte(val: string): string {
 
 function getTodayStr(): string {
   const d = new Date();
-  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 const MIN_ROWS = 7;
@@ -34,21 +38,34 @@ export default function PresupuestoPrint({ data }: Props) {
       id="print-area"
       style={{
         width: "794px",
-        minHeight: "1050px",
+        minHeight: "297mm",
         backgroundColor: "#ffffff",
         color: DARK,
         fontFamily: "'Arial', 'Helvetica Neue', Helvetica, sans-serif",
         boxSizing: "border-box",
         position: "relative",
-        overflow: "hidden",
+        overflow: "visible",
       }}
     >
       {/* TOP ACCENT BAR */}
-      <div style={{ height: "10px", background: `linear-gradient(90deg, ${RED} 0%, #e8472a 60%, #c0392b 100%)` }} />
+      <div
+        style={{
+          height: "10px",
+          background: `linear-gradient(90deg, ${RED} 0%, #e8472a 60%, #c0392b 100%)`,
+        }}
+      />
 
       {/* WATERMARK GEARS */}
       <svg
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.035, pointerEvents: "none", zIndex: 0 }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          opacity: 0.035,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
         viewBox="0 0 794 1050"
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -59,11 +76,18 @@ export default function PresupuestoPrint({ data }: Props) {
         </g>
       </svg>
 
-      <div style={{ position: "relative", zIndex: 1, padding: "32px 44px 36px" }}>
-
+      <div
+        style={{ position: "relative", zIndex: 1, padding: "32px 44px 36px" }}
+      >
         {/* ── HEADER ── */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
-
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "28px",
+          }}
+        >
           {/* Logo */}
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -73,44 +97,96 @@ export default function PresupuestoPrint({ data }: Props) {
               style={{ height: "130px", width: "auto", display: "block" }}
               onError={(e) => {
                 e.currentTarget.style.display = "none";
-                (e.currentTarget.nextElementSibling as HTMLElement).style.display = "block";
+                (
+                  e.currentTarget.nextElementSibling as HTMLElement
+                ).style.display = "block";
               }}
             />
             <div style={{ display: "none" }}>
-              <div style={{ fontSize: "60px", fontWeight: 900, letterSpacing: "6px", color: RED, lineHeight: 1 }}>GTM</div>
-              <div style={{ fontSize: "14px", letterSpacing: "4px", color: "#888", marginTop: "4px" }}>MECÁNICA GRANDOLI</div>
+              <div
+                style={{
+                  fontSize: "60px",
+                  fontWeight: 900,
+                  letterSpacing: "6px",
+                  color: RED,
+                  lineHeight: 1,
+                }}
+              >
+                GTM
+              </div>
+              <div
+                style={{
+                  fontSize: "14px",
+                  letterSpacing: "4px",
+                  color: "#888",
+                  marginTop: "4px",
+                }}
+              >
+                MECÁNICA GRANDOLI
+              </div>
             </div>
           </div>
 
           {/* Título */}
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "14px", letterSpacing: "5px", color: "#aaa", textTransform: "uppercase", marginBottom: "6px" }}>
+            <div
+              style={{
+                fontSize: "14px",
+                letterSpacing: "5px",
+                color: "#aaa",
+                textTransform: "uppercase",
+                marginBottom: "6px",
+              }}
+            >
               Mecánica Grandoli
             </div>
-            <div style={{ fontSize: "44px", fontWeight: 900, letterSpacing: "7px", color: DARK, lineHeight: 1 }}>
+            <div
+              style={{
+                fontSize: "44px",
+                fontWeight: 900,
+                letterSpacing: "7px",
+                color: DARK,
+                lineHeight: 1,
+              }}
+            >
               PRESUPUESTO
             </div>
-            <div style={{
-              display: "inline-block",
-              marginTop: "10px",
-              backgroundColor: RED,
-              color: "#fff",
-              fontSize: "14px",
-              fontWeight: 700,
-              letterSpacing: "2px",
-              padding: "5px 16px",
-              borderRadius: "3px",
-            }}>
+            <div
+              style={{
+                display: "inline-block",
+                marginTop: "10px",
+                backgroundColor: RED,
+                color: "#fff",
+                fontSize: "14px",
+                fontWeight: 700,
+                letterSpacing: "2px",
+                padding: "5px 16px",
+                borderRadius: "3px",
+              }}
+            >
               {today}
             </div>
           </div>
         </div>
 
         {/* ── DIVIDER ── */}
-        <div style={{ height: "3px", background: `linear-gradient(90deg, ${RED} 30%, transparent)`, marginBottom: "26px" }} />
+        <div
+          style={{
+            height: "3px",
+            background: `linear-gradient(90deg, ${RED} 30%, transparent)`,
+            marginBottom: "26px",
+          }}
+        />
 
         {/* ── DATOS CLIENTE ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "28px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "14px",
+            marginBottom: "28px",
+          }}
+        >
           <div style={fieldBox}>
             <div style={fieldLabel}>NOMBRE DEL CLIENTE</div>
             <div style={fieldValue}>{data.nombre || "—"}</div>
@@ -125,17 +201,34 @@ export default function PresupuestoPrint({ data }: Props) {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, width: "90px", textAlign: "center" }}>CANT.</th>
+              <th style={{ ...thStyle, width: "90px", textAlign: "center" }}>
+                CANT.
+              </th>
               <th style={{ ...thStyle, textAlign: "center" }}>DESCRIPCIÓN</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((item, i) => (
-              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? "#fff" : "#f9f9f9" }}>
-                <td style={{ ...tdStyle, textAlign: "center", fontFamily: "Courier New, monospace" }}>
+              <tr
+                key={i}
+                style={{ backgroundColor: i % 2 === 0 ? "#fff" : "#f9f9f9" }}
+              >
+                <td
+                  style={{
+                    ...tdStyle,
+                    textAlign: "center",
+                    fontFamily: "Courier New, monospace",
+                  }}
+                >
                   {item.cantidad}
                 </td>
-                <td style={{ ...tdStyle, textAlign: "center", fontWeight: item.descripcion ? 600 : 400 }}>
+                <td
+                  style={{
+                    ...tdStyle,
+                    textAlign: "center",
+                    fontWeight: item.descripcion ? 600 : 400,
+                  }}
+                >
                   {item.descripcion}
                 </td>
               </tr>
@@ -145,37 +238,75 @@ export default function PresupuestoPrint({ data }: Props) {
 
         {/* ── TOTAL ── */}
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <div style={{
-            backgroundColor: DARK,
-            color: "#fff",
-            padding: "18px 32px",
-            display: "flex",
-            alignItems: "center",
-            gap: "32px",
-            minWidth: "360px",
-          }}>
-            <div style={{ fontSize: "18px", fontWeight: 700, letterSpacing: "4px", flex: 1 }}>TOTAL</div>
-            <div style={{ fontSize: "32px", fontWeight: 900, fontFamily: "Courier New, monospace", color: "#f8a020" }}>
+          <div
+            style={{
+              backgroundColor: DARK,
+              color: "#fff",
+              padding: "18px 32px",
+              display: "flex",
+              alignItems: "center",
+              gap: "32px",
+              minWidth: "360px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "18px",
+                fontWeight: 700,
+                letterSpacing: "4px",
+                flex: 1,
+              }}
+            >
+              TOTAL
+            </div>
+            <div
+              style={{
+                fontSize: "32px",
+                fontWeight: 900,
+                fontFamily: "Courier New, monospace",
+                color: "#f8a020",
+              }}
+            >
               $ {formatImporte(data.total)}
             </div>
           </div>
         </div>
 
         {/* ── GARANTÍA ── */}
-        <div style={{
-          marginTop: "26px",
-          border: `1px solid ${RED}`,
-          borderLeft: `6px solid ${RED}`,
-          padding: "14px 22px",
-          display: "flex",
-          alignItems: "center",
-          gap: "14px",
-          backgroundColor: "#fff8f7",
-          borderRadius: "0 4px 4px 0",
-        }}>
-          <div style={{ color: RED, fontSize: "26px", lineHeight: 1, fontWeight: 900 }}>✓</div>
+        <div
+          style={{
+            marginTop: "26px",
+            border: `1px solid ${RED}`,
+            borderLeft: `6px solid ${RED}`,
+            padding: "14px 22px",
+            display: "flex",
+            alignItems: "center",
+            gap: "14px",
+            backgroundColor: "#fff8f7",
+            borderRadius: "0 4px 4px 0",
+          }}
+        >
+          <div
+            style={{
+              color: RED,
+              fontSize: "26px",
+              lineHeight: 1,
+              fontWeight: 900,
+            }}
+          >
+            ✓
+          </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: "15px", letterSpacing: "2px", color: RED }}>GARANTÍA INCLUIDA</div>
+            <div
+              style={{
+                fontWeight: 800,
+                fontSize: "15px",
+                letterSpacing: "2px",
+                color: RED,
+              }}
+            >
+              GARANTÍA INCLUIDA
+            </div>
             <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
               Este presupuesto incluye garantía de 6 meses sobre mano de obra.
             </div>
@@ -183,14 +314,16 @@ export default function PresupuestoPrint({ data }: Props) {
         </div>
 
         {/* ── FOOTER ── */}
-        <div style={{
-          marginTop: "36px",
-          paddingTop: "16px",
-          borderTop: `2px solid ${DARK}`,
-          display: "flex",
-          justifyContent: "center",
-          gap: "48px",
-        }}>
+        <div
+          style={{
+            marginTop: "36px",
+            paddingTop: "16px",
+            borderTop: `2px solid ${DARK}`,
+            display: "flex",
+            justifyContent: "center",
+            gap: "48px",
+          }}
+        >
           <div style={{ textAlign: "center" }}>
             <div style={footerLabel}>DIRECCIÓN</div>
             <div style={footerValue}>Viale 291, San Nicolás</div>
@@ -204,11 +337,19 @@ export default function PresupuestoPrint({ data }: Props) {
             <div style={footerValue}>mecanicagrandoli.com.ar</div>
           </div>
         </div>
-
       </div>
 
       {/* BOTTOM ACCENT BAR */}
-      <div style={{ height: "6px", background: `linear-gradient(90deg, ${RED}, transparent)`, position: "absolute", bottom: 0, left: 0, right: 0 }} />
+      <div
+        style={{
+          height: "6px",
+          background: `linear-gradient(90deg, ${RED}, transparent)`,
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+        }}
+      />
     </div>
   );
 }
@@ -268,7 +409,17 @@ const footerValue: React.CSSProperties = {
   color: "#555",
 };
 
-function GearShape({ cx, cy, r, teeth }: { cx: number; cy: number; r: number; teeth: number }) {
+function GearShape({
+  cx,
+  cy,
+  r,
+  teeth,
+}: {
+  cx: number;
+  cy: number;
+  r: number;
+  teeth: number;
+}) {
   const innerR = r * 0.7;
   const toothH = r * 0.25;
   const points: string[] = [];
@@ -278,10 +429,24 @@ function GearShape({ cx, cy, r, teeth }: { cx: number; cy: number; r: number; te
     const nextAngle = ((i + 0.5) / teeth) * 2 * Math.PI;
     const midAngle = ((i + 0.25) / teeth) * 2 * Math.PI;
 
-    points.push(`${cx + innerR * Math.cos(angle)},${cy + innerR * Math.sin(angle)}`);
-    points.push(`${cx + (r + toothH) * Math.cos(midAngle - 0.05)},${cy + (r + toothH) * Math.sin(midAngle - 0.05)}`);
-    points.push(`${cx + (r + toothH) * Math.cos(midAngle + 0.05)},${cy + (r + toothH) * Math.sin(midAngle + 0.05)}`);
-    points.push(`${cx + innerR * Math.cos(nextAngle)},${cy + innerR * Math.sin(nextAngle)}`);
+    points.push(
+      `${cx + innerR * Math.cos(angle)},${cy + innerR * Math.sin(angle)}`
+    );
+    points.push(
+      `${cx + (r + toothH) * Math.cos(midAngle - 0.05)},${
+        cy + (r + toothH) * Math.sin(midAngle - 0.05)
+      }`
+    );
+    points.push(
+      `${cx + (r + toothH) * Math.cos(midAngle + 0.05)},${
+        cy + (r + toothH) * Math.sin(midAngle + 0.05)
+      }`
+    );
+    points.push(
+      `${cx + innerR * Math.cos(nextAngle)},${
+        cy + innerR * Math.sin(nextAngle)
+      }`
+    );
   }
 
   return (

@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap");
+
 @import "tailwindcss";
 
 :root {
@@ -27,7 +29,7 @@ body {
   body {
     margin: 0 !important;
     padding: 0 !important;
-    background: #fff !important;
+    background: #0c1a2e !important;
     width: 210mm !important;
     height: 297mm !important;
     overflow: visible !important;
@@ -42,13 +44,11 @@ body {
     visibility: visible;
   }
 
-  /* Reset the preview scale wrapper */
   #print-scale-wrapper {
     transform: none !important;
     width: 210mm !important;
   }
 
-  /* Reset the preview outer container */
   #print-preview-container {
     width: 210mm !important;
     height: auto !important;

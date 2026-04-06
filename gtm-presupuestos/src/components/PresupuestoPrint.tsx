@@ -219,6 +219,7 @@ export default function PresupuestoPrint({ data }: Props) {
                     ...tdStyle,
                     textAlign: "center",
                     fontFamily: "Courier New, monospace",
+                    fontWeight: item.cantidad ? 700 : 400,
                   }}
                 >
                   {item.cantidad}
@@ -374,7 +375,7 @@ const fieldLabel: React.CSSProperties = {
 const fieldValue: React.CSSProperties = {
   fontSize: "22px",
   fontWeight: 700,
-  color: "#1a1a1a",
+  color: "#444444",
 };
 
 const thStyle: React.CSSProperties = {

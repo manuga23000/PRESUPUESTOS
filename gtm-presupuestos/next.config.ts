@@ -1,7 +1,8 @@
 import type { NextConfig } from 'next'
+import path from 'path'
 
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: 'D:/Desktop/GTM PRESUPUESTOS/PRESUPUESTOS/gtm-presupuestos',
+  outputFileTracingRoot: path.join(__dirname),
 }
 
 export default nextConfig

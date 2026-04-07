@@ -7,6 +7,14 @@ import { guardarPresupuesto, listarPresupuestos, eliminarPresupuesto } from "@/l
 
 const PresupuestoPrint = dynamic(() => import("@/components/PresupuestoPrint"), { ssr: false });
 
+// PDF design palette
+const BLUE = "#0ea5e9";
+const BLUE_DARK = "#0369a1";
+const BLUE_DEEP = "#0c1a2e";
+const BLUE_MID = "#0f2744";
+const ACCENT = "#38bdf8";
+const NEON = "#00d4ff";
+
 const EMPTY_ITEM: LineItem = { cantidad: "", descripcion: "", importe: "" };
 const EMPTY_DATA: PresupuestoData = {
   nombre: "",
@@ -23,6 +31,8 @@ export default function PresupuestoPage() {
   const [printHeight, setPrintHeight] = useState(1050);
   const printRef = useRef<HTMLDivElement>(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [historial, setHistorial] = useState<PresupuestoGuardado[]>([]);
   const [historialLoaded, setHistorialLoaded] = useState(false);
   const [historialLoading, setHistorialLoading] = useState(false);
@@ -40,6 +50,11 @@ export default function PresupuestoPage() {
       if (h > 0) setPrintHeight(h);
     }
   }, [showPreview, formData]);
+
+  useEffect(() => {
+    setSaved(false);
+    setSaveError(null);
+  }, [formData]);
 
   const loadHistorial = useCallback(async () => {
     if (historialLoaded) return;
@@ -74,12 +89,18 @@ export default function PresupuestoPage() {
   };
 
   const handleGuardar = async () => {
+    if (saving || saved) return;
+    setSaving(true);
+    setSaveError(null);
     try {
       await guardarPresupuesto(formData);
       setSaved(true);
       setHistorialLoaded(false);
     } catch (e) {
       console.error(e);
+      setSaveError(e instanceof Error ? e.message : "Error al guardar");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -106,87 +127,139 @@ export default function PresupuestoPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#0e0e0e", color: "#f0f0f0", fontFamily: "'IBM Plex Sans', Arial, sans-serif" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: BLUE_DEEP,
+        color: "#e2f0ff",
+        fontFamily: "'Rajdhani', 'Arial', sans-serif",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* GRID PATTERN BACKGROUND */}
+      <svg
+        style={{
+          position: "fixed",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          opacity: 0.06,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <pattern id="page-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke={NEON} strokeWidth="0.5" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#page-grid)" />
+      </svg>
+
+      {/* TOP NEON ACCENT BAR */}
+      <div
+        style={{
+          height: "4px",
+          background: `linear-gradient(90deg, transparent 0%, ${NEON} 40%, ${BLUE} 100%)`,
+          position: "relative",
+          zIndex: 2,
+        }}
+      />
+
       {/* TOPBAR */}
-      <div style={{ borderBottom: "1px solid #2a2a2a", padding: "0 24px", display: "flex", alignItems: "center", gap: "24px", height: "52px" }}>
-        <span style={{ fontWeight: 700, fontSize: "15px", letterSpacing: "1px", color: "#fff" }}>
-          GTM · Presupuestos
+      <div
+        style={{
+          borderBottom: `1px solid ${BLUE}33`,
+          padding: "0 28px",
+          display: "flex",
+          alignItems: "center",
+          gap: "24px",
+          height: "60px",
+          position: "relative",
+          zIndex: 2,
+          background: `linear-gradient(180deg, ${BLUE_MID}cc 0%, ${BLUE_DEEP}aa 100%)`,
+          boxShadow: `0 1px 0 ${NEON}22`,
+        }}
+      >
+        <span
+          style={{
+            fontWeight: 900,
+            fontSize: "16px",
+            letterSpacing: "4px",
+            color: "#ffffff",
+            fontFamily: "'Orbitron', sans-serif",
+            textShadow: `0 0 14px ${BLUE}66`,
+          }}
+        >
+          GTM <span style={{ color: NEON }}>·</span> PRESUPUESTOS
         </span>
-        <div style={{ display: "flex", gap: "4px", marginLeft: "16px" }}>
+        <div style={{ display: "flex", gap: "6px", marginLeft: "20px" }}>
           <button
             onClick={() => handleTabChange("nuevo")}
-            style={{
-              padding: "6px 18px",
-              borderRadius: "4px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: 600,
-              fontSize: "13px",
-              backgroundColor: tab === "nuevo" ? "#C0392B" : "transparent",
-              color: tab === "nuevo" ? "#fff" : "#999",
-              transition: "all 0.15s",
-            }}
+            style={tabBtn(tab === "nuevo")}
           >
-            Nuevo
+            NUEVO
           </button>
           <button
             onClick={() => handleTabChange("historial")}
-            style={{
-              padding: "6px 18px",
-              borderRadius: "4px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: 600,
-              fontSize: "13px",
-              backgroundColor: tab === "historial" ? "#C0392B" : "transparent",
-              color: tab === "historial" ? "#fff" : "#999",
-              transition: "all 0.15s",
-            }}
+            style={tabBtn(tab === "historial")}
           >
-            Historial
+            HISTORIAL
           </button>
         </div>
       </div>
 
       {/* TAB NUEVO */}
       {tab === "nuevo" && (
-        <div style={{ display: "flex", gap: "24px", padding: "24px", alignItems: "flex-start" }}>
+        <div style={{ display: "flex", gap: "24px", padding: "24px", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
           {/* LEFT COLUMN */}
           <div style={{ flex: "0 0 420px", display: "flex", flexDirection: "column", gap: "16px" }}>
             {/* MANUAL EDIT Card */}
-            <div style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a", borderRadius: "8px", padding: "20px" }}>
-              <div style={{ fontWeight: 700, fontSize: "13px", marginBottom: "12px", color: "#ccc", letterSpacing: "0.5px" }}>
+            <div style={cardStyle}>
+              <div
+                style={{
+                  fontWeight: 800,
+                  fontSize: "13px",
+                  marginBottom: "16px",
+                  color: NEON,
+                  letterSpacing: "4px",
+                  fontFamily: "'Orbitron', sans-serif",
+                  textShadow: `0 0 8px ${NEON}55`,
+                }}
+              >
                 EDITAR MANUALMENTE
               </div>
 
               <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: "11px", color: "#666", display: "block", marginBottom: "4px" }}>NOMBRE</label>
+                  <label style={fieldLabelStyle}>NOMBRE</label>
                   <input
                     value={formData.nombre}
                     onChange={(e) => setFormData((p) => ({ ...p, nombre: e.target.value }))}
                     style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = "#C0392B")}
-                    onBlur={(e) => (e.target.style.borderColor = "#333")}
+                    onFocus={(e) => (e.target.style.borderColor = NEON)}
+                    onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
                   />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: "11px", color: "#666", display: "block", marginBottom: "4px" }}>VEHÍCULO</label>
+                  <label style={fieldLabelStyle}>VEHÍCULO</label>
                   <input
                     value={formData.vehiculo}
                     onChange={(e) => setFormData((p) => ({ ...p, vehiculo: e.target.value }))}
                     style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = "#C0392B")}
-                    onBlur={(e) => (e.target.style.borderColor = "#333")}
+                    onFocus={(e) => (e.target.style.borderColor = NEON)}
+                    onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
                   />
                 </div>
               </div>
 
               {/* Items grid */}
               <div style={{ marginBottom: "8px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "70px 1fr 28px", gap: "4px", marginBottom: "4px" }}>
-                  <span style={{ fontSize: "10px", color: "#555", textTransform: "uppercase" }}>Cant.</span>
-                  <span style={{ fontSize: "10px", color: "#555", textTransform: "uppercase" }}>Descripción</span>
+                <div style={{ display: "grid", gridTemplateColumns: "70px 1fr 28px", gap: "4px", marginBottom: "6px" }}>
+                  <span style={fieldLabelStyle}>CANT.</span>
+                  <span style={fieldLabelStyle}>DESCRIPCIÓN</span>
                   <span />
                 </div>
                 {formData.items.map((item, i) => (
@@ -195,33 +268,33 @@ export default function PresupuestoPage() {
                       value={item.cantidad}
                       onChange={(e) => updateItem(i, "cantidad", e.target.value)}
                       placeholder="1"
-                      style={{ ...inputStyle, fontFamily: "Courier New, monospace", textAlign: "center", padding: "6px 4px" }}
-                      onFocus={(e) => (e.target.style.borderColor = "#C0392B")}
-                      onBlur={(e) => (e.target.style.borderColor = "#333")}
+                      style={{ ...inputStyle, fontFamily: "'Orbitron', monospace", textAlign: "center", padding: "6px 4px", color: NEON }}
+                      onFocus={(e) => (e.target.style.borderColor = NEON)}
+                      onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
                     />
                     <input
                       value={item.descripcion}
                       onChange={(e) => updateItem(i, "descripcion", e.target.value.toUpperCase())}
                       placeholder="DESCRIPCIÓN"
                       style={{ ...inputStyle, padding: "6px 8px", textTransform: "uppercase" }}
-                      onFocus={(e) => (e.target.style.borderColor = "#C0392B")}
-                      onBlur={(e) => (e.target.style.borderColor = "#333")}
+                      onFocus={(e) => (e.target.style.borderColor = NEON)}
+                      onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
                     />
                     <button
                       onClick={() => removeItem(i)}
                       style={{
                         backgroundColor: "transparent",
-                        border: "1px solid #333",
+                        border: `1px solid ${BLUE}55`,
                         borderRadius: "4px",
-                        color: "#666",
+                        color: `${BLUE}aa`,
                         cursor: "pointer",
                         fontSize: "14px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = "#e05555"; e.currentTarget.style.borderColor = "#e05555"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = "#666"; e.currentTarget.style.borderColor = "#333"; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = NEON; e.currentTarget.style.borderColor = NEON; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = `${BLUE}aa`; e.currentTarget.style.borderColor = `${BLUE}55`; }}
                     >
                       ×
                     </button>
@@ -233,58 +306,86 @@ export default function PresupuestoPage() {
                 onClick={addItem}
                 style={{
                   backgroundColor: "transparent",
-                  border: "1px dashed #333",
+                  border: `1px dashed ${BLUE}66`,
                   borderRadius: "4px",
-                  color: "#666",
+                  color: `${ACCENT}bb`,
                   cursor: "pointer",
                   fontSize: "12px",
-                  padding: "6px 12px",
+                  fontWeight: 700,
+                  letterSpacing: "2px",
+                  padding: "8px 12px",
                   width: "100%",
-                  marginBottom: "12px",
+                  marginBottom: "14px",
+                  fontFamily: "'Rajdhani', sans-serif",
+                  textTransform: "uppercase",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#C0392B"; e.currentTarget.style.color = "#C0392B"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#333"; e.currentTarget.style.color = "#666"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = NEON; e.currentTarget.style.color = NEON; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${BLUE}66`; e.currentTarget.style.color = `${ACCENT}bb`; }}
               >
                 + agregar fila
               </button>
 
-              <div style={{ marginBottom: "12px" }}>
-                <label style={{ fontSize: "11px", color: "#666", display: "block", marginBottom: "4px" }}>TOTAL $</label>
+              <div style={{ marginBottom: "14px" }}>
+                <label style={fieldLabelStyle}>TOTAL $</label>
                 <input
                   value={formData.total}
                   onChange={(e) => setFormData((p) => ({ ...p, total: e.target.value }))}
                   placeholder="0"
                   style={{
                     ...inputStyle,
-                    fontFamily: "Courier New, monospace",
-                    fontSize: "18px",
-                    color: "#C0392B",
-                    fontWeight: "bold",
+                    fontFamily: "'Orbitron', monospace",
+                    fontSize: "20px",
+                    color: NEON,
+                    fontWeight: 700,
                     textAlign: "right",
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = "#C0392B")}
-                  onBlur={(e) => (e.target.style.borderColor = "#333")}
+                  onFocus={(e) => (e.target.style.borderColor = NEON)}
+                  onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
                 />
               </div>
 
               <div style={{ display: "flex", gap: "8px" }}>
                 <button
-                  onClick={() => { setShowPreview(true); setSaved(false); }}
-                  style={{ ...btnPrimary, flex: 1 }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e04030")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#C0392B")}
+                  onClick={() => { setShowPreview(true); }}
+                  style={{ ...btnSecondary, flex: 1 }}
                 >
-                  Ver preview
+                  VER PREVIEW
                 </button>
                 <button
-                  onClick={() => { setFormData(EMPTY_DATA); setShowPreview(false); setSaved(false); }}
-                  style={{ ...btnSecondary }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#222"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                  onClick={handleGuardar}
+                  disabled={saving || saved}
+                  style={
+                    saved
+                      ? { ...btnPrimary, flex: 1, background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`, color: NEON, cursor: "default" }
+                      : { ...btnPrimary, flex: 1, opacity: saving ? 0.6 : 1, cursor: saving ? "wait" : "pointer" }
+                  }
                 >
-                  Limpiar
+                  {saved ? "✓ GUARDADO" : saving ? "GUARDANDO..." : "GUARDAR"}
+                </button>
+                <button
+                  onClick={() => { setFormData(EMPTY_DATA); setShowPreview(false); setSaved(false); setSaveError(null); }}
+                  style={{ ...btnSecondary }}
+                >
+                  LIMPIAR
                 </button>
               </div>
+              {saveError && (
+                <div
+                  style={{
+                    marginTop: "10px",
+                    padding: "8px 12px",
+                    border: `1px solid #ff5577`,
+                    borderLeft: `3px solid #ff5577`,
+                    background: "#3a0e1a",
+                    color: "#ffb3c1",
+                    fontSize: "12px",
+                    letterSpacing: "1px",
+                    borderRadius: "3px",
+                  }}
+                >
+                  {saveError}
+                </div>
+              )}
             </div>
           </div>
 
@@ -292,35 +393,48 @@ export default function PresupuestoPage() {
           <div style={{ flex: 1, minWidth: 0 }}>
             {showPreview ? (
               <div>
-                <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
                   <button
                     onClick={handleGuardar}
                     disabled={saved}
-                    style={{
-                      backgroundColor: saved ? "#1a4a1a" : "#C0392B",
-                      color: saved ? "#4caf50" : "#fff",
-                      border: saved ? "1px solid #4caf50" : "none",
-                      borderRadius: "4px",
-                      padding: "8px 20px",
-                      fontWeight: 700,
-                      fontSize: "13px",
-                      cursor: saved ? "default" : "pointer",
-                    }}
-                    onMouseEnter={(e) => { if (!saved) e.currentTarget.style.backgroundColor = "#e04030"; }}
-                    onMouseLeave={(e) => { if (!saved) e.currentTarget.style.backgroundColor = "#C0392B"; }}
+                    style={
+                      saved
+                        ? {
+                            background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`,
+                            color: NEON,
+                            border: `1px solid ${NEON}`,
+                            borderRadius: "4px",
+                            padding: "10px 22px",
+                            fontWeight: 800,
+                            fontSize: "13px",
+                            letterSpacing: "3px",
+                            fontFamily: "'Orbitron', sans-serif",
+                            cursor: "default",
+                            boxShadow: `0 0 12px ${NEON}55`,
+                          }
+                        : { ...btnPrimary, padding: "10px 22px" }
+                    }
                   >
-                    {saved ? "✓ Guardado" : "Guardar"}
+                    {saved ? "✓ GUARDADO" : "GUARDAR"}
                   </button>
                   <button
                     onClick={() => window.print()}
-                    style={{ ...btnSecondary, padding: "8px 20px" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#222"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                    style={{ ...btnSecondary, padding: "10px 22px" }}
                   >
-                    🖨 Imprimir / PDF
+                    🖨 IMPRIMIR / PDF
                   </button>
                 </div>
-                <div id="print-preview-container" style={{ border: "1px solid #2a2a2a", borderRadius: "4px", width: `${794 * previewScale}px`, height: `${printHeight * previewScale}px`, overflow: "hidden" }}>
+                <div
+                  id="print-preview-container"
+                  style={{
+                    border: `1px solid ${BLUE}55`,
+                    borderRadius: "4px",
+                    width: `${794 * previewScale}px`,
+                    height: `${printHeight * previewScale}px`,
+                    overflow: "hidden",
+                    boxShadow: `0 0 30px ${BLUE}33`,
+                  }}
+                >
                   <div id="print-scale-wrapper" ref={printRef} style={{ width: "794px", transformOrigin: "top left", transform: `scale(${previewScale})` }}>
                     <PresupuestoPrint data={formData} />
                   </div>
@@ -333,13 +447,16 @@ export default function PresupuestoPage() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  border: "1px dashed #2a2a2a",
+                  border: `1px dashed ${BLUE}55`,
                   borderRadius: "8px",
-                  color: "#444",
+                  color: `${ACCENT}88`,
                   fontSize: "14px",
+                  letterSpacing: "3px",
+                  fontFamily: "'Orbitron', sans-serif",
+                  background: `linear-gradient(135deg, ${BLUE_MID}66, ${BLUE_DEEP}88)`,
                 }}
               >
-                El presupuesto aparecerá acá
+                EL PRESUPUESTO APARECERÁ ACÁ
               </div>
             )}
           </div>
@@ -348,12 +465,12 @@ export default function PresupuestoPage() {
 
       {/* TAB HISTORIAL */}
       {tab === "historial" && (
-        <div style={{ padding: "24px", maxWidth: "900px" }}>
+        <div style={{ padding: "24px", maxWidth: "900px", position: "relative", zIndex: 1 }}>
           {historialLoading && (
-            <div style={{ color: "#666", fontSize: "13px" }}>Cargando...</div>
+            <div style={{ color: ACCENT, fontSize: "13px", letterSpacing: "3px", fontFamily: "'Orbitron', sans-serif" }}>CARGANDO...</div>
           )}
           {!historialLoading && historial.length === 0 && (
-            <div style={{ color: "#444", fontSize: "13px" }}>No hay presupuestos guardados.</div>
+            <div style={{ color: `${BLUE}aa`, fontSize: "13px", letterSpacing: "2px" }}>No hay presupuestos guardados.</div>
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {historial.map((p) => (
@@ -393,59 +510,64 @@ function HistorialCard({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        backgroundColor: "#161616",
-        border: `1px solid ${hover ? "#333" : "#2a2a2a"}`,
-        borderRadius: "6px",
+        background: `linear-gradient(135deg, ${BLUE_MID}ee, ${BLUE_DEEP}cc)`,
+        border: `1px solid ${hover ? NEON : `${BLUE}44`}`,
+        borderLeft: `3px solid ${hover ? NEON : `${BLUE}88`}`,
+        borderRadius: "4px",
         padding: "14px 18px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        transition: "border-color 0.15s",
+        transition: "all 0.15s",
+        boxShadow: hover ? `0 0 16px ${NEON}33` : "none",
       }}
     >
       <div>
-        <div style={{ fontWeight: 700, fontSize: "14px", color: "#f0f0f0" }}>{presupuesto.nombre}</div>
-        <div style={{ fontSize: "12px", color: "#666", marginTop: "2px" }}>
+        <div style={{ fontWeight: 700, fontSize: "16px", color: "#e2f0ff", letterSpacing: "1px" }}>{presupuesto.nombre}</div>
+        <div style={{ fontSize: "12px", color: `${ACCENT}99`, marginTop: "3px", letterSpacing: "1px" }}>
           {presupuesto.vehiculo} · {presupuesto.items.filter((i) => i.descripcion).length} ítems
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontFamily: "Courier New, monospace", fontSize: "15px", color: "#C0392B", fontWeight: 700 }}>
+          <div style={{ fontFamily: "'Orbitron', monospace", fontSize: "16px", color: NEON, fontWeight: 700, textShadow: `0 0 10px ${NEON}55` }}>
             {formatTotal(presupuesto.total)}
           </div>
-          <div style={{ fontSize: "11px", color: "#555" }}>{formatFecha(presupuesto.creadoEn)}</div>
+          <div style={{ fontSize: "11px", color: `${BLUE}aa`, marginTop: "2px", letterSpacing: "1px" }}>{formatFecha(presupuesto.creadoEn)}</div>
         </div>
         {hover && (
           <div style={{ display: "flex", gap: "6px" }}>
             <button
               onClick={() => onCargar(presupuesto)}
               style={{
-                backgroundColor: "#C0392B",
+                background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`,
                 color: "#fff",
-                border: "none",
+                border: `1px solid ${NEON}`,
                 borderRadius: "4px",
-                padding: "5px 12px",
+                padding: "6px 14px",
                 fontSize: "12px",
-                fontWeight: 600,
+                fontWeight: 800,
+                letterSpacing: "2px",
                 cursor: "pointer",
+                fontFamily: "'Orbitron', sans-serif",
+                boxShadow: `0 0 10px ${NEON}55`,
               }}
             >
-              Cargar
+              CARGAR
             </button>
             <button
               onClick={() => onEliminar(presupuesto.id)}
               style={{
                 backgroundColor: "transparent",
-                color: "#666",
-                border: "1px solid #333",
+                color: `${BLUE}aa`,
+                border: `1px solid ${BLUE}55`,
                 borderRadius: "4px",
-                padding: "5px 10px",
+                padding: "6px 12px",
                 fontSize: "13px",
                 cursor: "pointer",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#e05555"; e.currentTarget.style.borderColor = "#e05555"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "#666"; e.currentTarget.style.borderColor = "#333"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = NEON; e.currentTarget.style.borderColor = NEON; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = `${BLUE}aa`; e.currentTarget.style.borderColor = `${BLUE}55`; }}
             >
               ✕
             </button>
@@ -456,39 +578,85 @@ function HistorialCard({
   );
 }
 
+const cardStyle: React.CSSProperties = {
+  background: `linear-gradient(135deg, ${BLUE_MID}ee, ${BLUE_DEEP}cc)`,
+  border: `1px solid ${BLUE}44`,
+  borderLeft: `3px solid ${NEON}88`,
+  borderRadius: "4px",
+  padding: "22px",
+  boxShadow: `inset 0 1px 0 ${BLUE}22, 0 0 24px ${BLUE}22`,
+};
+
+const fieldLabelStyle: React.CSSProperties = {
+  fontSize: "10px",
+  fontWeight: 700,
+  letterSpacing: "3px",
+  color: BLUE,
+  display: "block",
+  marginBottom: "5px",
+  textTransform: "uppercase",
+  fontFamily: "'Rajdhani', sans-serif",
+};
+
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  backgroundColor: "#0e0e0e",
-  border: "1px solid #333",
-  borderRadius: "4px",
-  color: "#f0f0f0",
-  padding: "7px 10px",
-  fontSize: "13px",
-  fontFamily: "inherit",
+  backgroundColor: `${BLUE_DEEP}cc`,
+  border: `1px solid ${BLUE}55`,
+  borderRadius: "3px",
+  color: "#e2f0ff",
+  padding: "8px 10px",
+  fontSize: "14px",
+  fontFamily: "'Rajdhani', sans-serif",
+  fontWeight: 600,
   outline: "none",
   boxSizing: "border-box",
+  transition: "border-color 0.15s",
 };
 
 const btnPrimary: React.CSSProperties = {
-  backgroundColor: "#C0392B",
+  background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`,
   color: "#fff",
-  border: "none",
+  border: `1px solid ${NEON}`,
   borderRadius: "4px",
-  padding: "9px 16px",
-  fontWeight: 700,
+  padding: "10px 18px",
+  fontWeight: 800,
   fontSize: "13px",
+  letterSpacing: "3px",
   cursor: "pointer",
-  transition: "background 0.15s",
+  fontFamily: "'Orbitron', sans-serif",
+  boxShadow: `0 0 14px ${NEON}55`,
+  transition: "all 0.15s",
 };
 
 const btnSecondary: React.CSSProperties = {
   backgroundColor: "transparent",
-  color: "#999",
-  border: "1px solid #333",
+  color: ACCENT,
+  border: `1px solid ${BLUE}66`,
   borderRadius: "4px",
-  padding: "9px 16px",
-  fontWeight: 600,
+  padding: "10px 18px",
+  fontWeight: 700,
   fontSize: "13px",
+  letterSpacing: "3px",
   cursor: "pointer",
-  transition: "background 0.15s",
+  fontFamily: "'Orbitron', sans-serif",
+  transition: "all 0.15s",
 };
+
+function tabBtn(active: boolean): React.CSSProperties {
+  return {
+    padding: "8px 22px",
+    borderRadius: "3px",
+    border: active ? `1px solid ${NEON}` : `1px solid transparent`,
+    cursor: "pointer",
+    fontWeight: 800,
+    fontSize: "12px",
+    letterSpacing: "3px",
+    fontFamily: "'Orbitron', sans-serif",
+    background: active
+      ? `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`
+      : "transparent",
+    color: active ? "#fff" : `${ACCENT}aa`,
+    boxShadow: active ? `0 0 12px ${NEON}55` : "none",
+    transition: "all 0.15s",
+  };
+}

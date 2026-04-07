@@ -3,7 +3,7 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
+  bundlePagesRouterDependencies: true,
 };
 
 export default nextConfig;
-//

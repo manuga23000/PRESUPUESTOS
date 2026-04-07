@@ -1,8 +1,11 @@
-import type { NextConfig } from 'next'
-import path from 'path'
+import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
-}
+  experimental: {
+    turbo: undefined,
+  },
+};
 
-export default nextConfig
+export default nextConfig;

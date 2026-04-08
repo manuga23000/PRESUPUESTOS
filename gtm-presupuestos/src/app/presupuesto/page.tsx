@@ -21,6 +21,7 @@ const EMPTY_DATA: PresupuestoData = {
   vehiculo: "",
   items: [{ ...EMPTY_ITEM }],
   total: "",
+  moneda: "ARS",
 };
 
 export default function PresupuestoPage() {
@@ -110,7 +111,7 @@ export default function PresupuestoPage() {
   };
 
   const handleCargar = (p: PresupuestoGuardado) => {
-    setFormData({ nombre: p.nombre, vehiculo: p.vehiculo, items: p.items, total: p.total });
+    setFormData({ nombre: p.nombre, vehiculo: p.vehiculo, items: p.items, total: p.total, moneda: p.moneda || "ARS" });
     setSaved(false);
     setShowPreview(false);
     setTab("nuevo");
@@ -120,9 +121,10 @@ export default function PresupuestoPage() {
     return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "2-digit" });
   };
 
-  const formatTotal = (t: string) => {
+  const formatTotal = (t: string, moneda: "ARS" | "USD" = "ARS") => {
     const n = parseFloat(t.replace(/\./g, "").replace(",", "."));
     if (isNaN(n)) return t;
+    if (moneda === "USD") return `${n.toLocaleString("es-AR")} usd`;
     return `$${n.toLocaleString("es-AR")}`;
   };
 
@@ -326,7 +328,39 @@ export default function PresupuestoPage() {
               </button>
 
               <div style={{ marginBottom: "14px" }}>
-                <label style={fieldLabelStyle}>TOTAL $</label>
+                <label style={fieldLabelStyle}>MONEDA</label>
+                <div style={{ display: "flex", gap: "6px", marginBottom: "10px" }}>
+                  {(["ARS", "USD"] as const).map((m) => {
+                    const active = formData.moneda === m;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setFormData((p) => ({ ...p, moneda: m }))}
+                        style={{
+                          flex: 1,
+                          padding: "8px 12px",
+                          fontSize: "12px",
+                          fontWeight: 800,
+                          letterSpacing: "2px",
+                          fontFamily: "'Orbitron', sans-serif",
+                          cursor: "pointer",
+                          borderRadius: "3px",
+                          border: active ? `1px solid ${NEON}` : `1px solid ${BLUE}55`,
+                          background: active
+                            ? `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`
+                            : "transparent",
+                          color: active ? "#fff" : `${ACCENT}aa`,
+                          boxShadow: active ? `0 0 12px ${NEON}55` : "none",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {m === "ARS" ? "$ PESOS" : "USD"}
+                      </button>
+                    );
+                  })}
+                </div>
+                <label style={fieldLabelStyle}>{formData.moneda === "USD" ? "TOTAL USD" : "TOTAL $"}</label>
                 <input
                   value={formData.total}
                   onChange={(e) => setFormData((p) => ({ ...p, total: e.target.value }))}
@@ -499,7 +533,7 @@ function HistorialCard({
 }: {
   presupuesto: PresupuestoGuardado;
   formatFecha: (d: Date) => string;
-  formatTotal: (t: string) => string;
+  formatTotal: (t: string, moneda?: "ARS" | "USD") => string;
   onCargar: (p: PresupuestoGuardado) => void;
   onEliminar: (id: string) => void;
 }) {
@@ -531,7 +565,7 @@ function HistorialCard({
       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontFamily: "'Orbitron', monospace", fontSize: "16px", color: NEON, fontWeight: 700, textShadow: `0 0 10px ${NEON}55` }}>
-            {formatTotal(presupuesto.total)}
+            {formatTotal(presupuesto.total, presupuesto.moneda)}
           </div>
           <div style={{ fontSize: "11px", color: `${BLUE}aa`, marginTop: "2px", letterSpacing: "1px" }}>{formatFecha(presupuesto.creadoEn)}</div>
         </div>

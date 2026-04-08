@@ -410,7 +410,9 @@ export default function PresupuestoPrint({ data }: Props) {
                 borderLeft: `2px solid ${BLUE}`,
               }}
             >
-              $ {formatImporte(data.total)}
+              {data.moneda === "USD"
+                ? `${formatImporte(data.total)} usd`
+                : `$ ${formatImporte(data.total)}`}
             </div>
           </div>
         </div>

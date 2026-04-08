@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npm run:*)",
       "Bash(npx next:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git:*)",
+      "Bash(rm -rf node_modules)",
+      "Bash(npm install:*)"
     ]
   }
 }

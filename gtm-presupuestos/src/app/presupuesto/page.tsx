@@ -62,6 +62,37 @@ export default function PresupuestoPage() {
     return () => window.removeEventListener("resize", calc);
   }, []);
 
+  const handleCompartir = () => {
+    const original = document.getElementById("print-area");
+    if (!original) {
+      window.print();
+      return;
+    }
+    const existing = document.getElementById("print-clone");
+    if (existing) existing.remove();
+
+    const clone = original.cloneNode(true) as HTMLElement;
+    clone.id = "print-clone";
+    clone.style.transform = "none";
+    clone.style.width = "210mm";
+    clone.style.height = "297mm";
+    clone.style.minHeight = "0";
+    document.body.appendChild(clone);
+    document.body.classList.add("printing");
+
+    const cleanup = () => {
+      document.body.classList.remove("printing");
+      const c = document.getElementById("print-clone");
+      if (c) c.remove();
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+
+    window.print();
+    // Fallback cleanup in case afterprint doesn't fire (some mobile browsers)
+    setTimeout(cleanup, 1500);
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -545,10 +576,10 @@ export default function PresupuestoPage() {
                     {saved ? "✓ GUARDADO" : "GUARDAR"}
                   </button>
                   <button
-                    onClick={() => window.print()}
+                    onClick={handleCompartir}
                     style={{ ...btnSecondary, padding: "10px 22px" }}
                   >
-                    🖨 IMPRIMIR / PDF
+                    📤 COMPARTIR
                   </button>
                 </div>
                 <div

@@ -471,10 +471,10 @@ export default function PresupuestoPage() {
                 />
               </div>
 
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 <button
                   onClick={() => { setShowPreview(true); }}
-                  style={{ ...btnSecondary, flex: 1 }}
+                  style={{ ...btnSecondary, flex: "1 1 120px", padding: isMobile ? "10px 8px" : "10px 18px" }}
                 >
                   VER PREVIEW
                 </button>
@@ -483,15 +483,15 @@ export default function PresupuestoPage() {
                   disabled={saving || saved}
                   style={
                     saved
-                      ? { ...btnPrimary, flex: 1, background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`, color: NEON, cursor: "default" }
-                      : { ...btnPrimary, flex: 1, opacity: saving ? 0.6 : 1, cursor: saving ? "wait" : "pointer" }
+                      ? { ...btnPrimary, flex: "1 1 120px", padding: isMobile ? "10px 8px" : "10px 18px", background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`, color: NEON, cursor: "default" }
+                      : { ...btnPrimary, flex: "1 1 120px", padding: isMobile ? "10px 8px" : "10px 18px", opacity: saving ? 0.6 : 1, cursor: saving ? "wait" : "pointer" }
                   }
                 >
                   {saved ? "✓ GUARDADO" : saving ? "GUARDANDO..." : "GUARDAR"}
                 </button>
                 <button
                   onClick={() => { setFormData(EMPTY_DATA); setShowPreview(false); setSaved(false); setSaveError(null); }}
-                  style={{ ...btnSecondary }}
+                  style={{ ...btnSecondary, flex: isMobile ? "1 1 100%" : "0 0 auto", padding: isMobile ? "10px 8px" : "10px 18px" }}
                 >
                   LIMPIAR
                 </button>

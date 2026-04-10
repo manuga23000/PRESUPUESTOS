@@ -82,44 +82,61 @@ export default function PresupuestoPage() {
 
     if (isMobile) {
       // Limpieza previa
-      const existingWrapper = document.getElementById("print-capture-wrapper");
-      if (existingWrapper) existingWrapper.remove();
+      const existingIframe = document.getElementById("print-capture-iframe") as HTMLIFrameElement | null;
+      if (existingIframe) existingIframe.remove();
 
-      // ── FIX MOBILE: envolvemos el clon en un contenedor de 794px
-      // para que html2canvas lo capture con el contexto correcto,
-      // independientemente del viewport real del dispositivo.
-      // Con position:fixed el browser mobile calcula el layout
-      // usando el viewport real (ej: 390px) y html2canvas captura
-      // con ese ancho, causando los desfasajes. Con este wrapper
-      // el containing block siempre es 794px.
-      const wrapper = document.createElement("div");
-      wrapper.id = "print-capture-wrapper";
-      wrapper.style.position = "absolute";
-      wrapper.style.top = "0";
-      wrapper.style.left = "-10000px";
-      wrapper.style.width = "794px";
-      wrapper.style.height = "1123px";
-      wrapper.style.overflow = "hidden";
-      wrapper.style.zIndex = "-9999";
-      wrapper.style.pointerEvents = "none";
-
-      const clone = original.cloneNode(true) as HTMLElement;
-      clone.id = "print-capture";
-      clone.style.transform = "none";
-      clone.style.width = "794px";
-      clone.style.height = "1123px";
-      clone.style.minHeight = "1123px";
-      clone.style.position = "absolute";
-      clone.style.top = "0";
-      clone.style.left = "0";
-      clone.style.zIndex = "1";
-
-      wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
+      // ── FIX MOBILE: usamos un iframe con viewport propio de 794px.
+      // Un clon dentro del mismo document hereda el motor de rendering
+      // mobile (métricas de fuentes, sub-pixel, etc.) causando desfasajes.
+      // El iframe crea un contexto de rendering aislado donde el viewport
+      // es 794px, idéntico a como lo vería un navegador desktop.
+      const iframe = document.createElement("iframe");
+      iframe.id = "print-capture-iframe";
+      iframe.style.position = "fixed";
+      iframe.style.top = "0";
+      iframe.style.left = "-10000px";
+      iframe.style.width = "794px";
+      iframe.style.height = "1123px";
+      iframe.style.border = "none";
+      iframe.style.zIndex = "-9999";
+      iframe.style.pointerEvents = "none";
+      document.body.appendChild(iframe);
 
       try {
-        await document.fonts.ready;
-        await new Promise((r) => setTimeout(r, 100));
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) throw new Error("No se pudo acceder al iframe");
+
+        // Copiamos los stylesheets y fuentes al iframe
+        iframeDoc.open();
+        iframeDoc.write(`<!DOCTYPE html><html><head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=794">
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+          <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { width: 794px; height: 1123px; overflow: hidden; background: #0c1a2e; }
+          </style>
+        </head><body></body></html>`);
+        iframeDoc.close();
+
+        // Clonamos el contenido dentro del iframe
+        const clone = original.cloneNode(true) as HTMLElement;
+        clone.id = "print-capture";
+        clone.style.transform = "none";
+        clone.style.width = "794px";
+        clone.style.height = "1123px";
+        clone.style.minHeight = "1123px";
+        clone.style.position = "relative";
+        iframeDoc.body.appendChild(clone);
+
+        // Esperamos a que las fuentes carguen dentro del iframe
+        if (iframe.contentDocument?.fonts) {
+          await iframe.contentDocument.fonts.ready;
+        }
+        // Delay extra para que el browser renderice completamente
+        await new Promise((r) => setTimeout(r, 300));
 
         const [{ default: html2canvas }, jsPDFmod] = await Promise.all([
           import("html2canvas"),
@@ -173,8 +190,8 @@ export default function PresupuestoPage() {
         console.error("Error generando PDF:", err);
         alert("No se pudo generar el PDF. Intentá de nuevo.");
       } finally {
-        const w = document.getElementById("print-capture-wrapper");
-        if (w) w.remove();
+        const f = document.getElementById("print-capture-iframe");
+        if (f) f.remove();
       }
       return;
     }

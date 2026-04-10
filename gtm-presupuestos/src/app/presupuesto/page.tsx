@@ -85,6 +85,7 @@ export default function PresupuestoPage() {
     const scaleWrapper = document.getElementById("print-scale-wrapper");
     const prevTransform = scaleWrapper?.style.transform || "";
     const prevOverflow = original.parentElement?.style.overflow || "";
+    const origSrcs: { img: HTMLImageElement; src: string }[] = [];
 
     try {
       // Quitar scale para capturar a tamaño real (794×1123)
@@ -92,6 +93,28 @@ export default function PresupuestoPage() {
       if (original.parentElement) original.parentElement.style.overflow = "visible";
 
       await document.fonts.ready;
+
+      // Convertir imágenes a base64 inline para que html-to-image las
+      // incluya en el SVG (las URLs externas se bloquean por seguridad)
+      const images = original.querySelectorAll("img");
+      await Promise.all(
+        Array.from(images).map(async (img) => {
+          if (img.src.startsWith("data:")) return;
+          origSrcs.push({ img, src: img.src });
+          try {
+            const resp = await fetch(img.src);
+            const blob = await resp.blob();
+            const dataUrl: string = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            img.src = dataUrl;
+          } catch {
+            // Si falla, queda la URL original
+          }
+        })
+      );
 
       const [htmlToImage, jsPDFmod] = await Promise.all([
         import("html-to-image"),
@@ -106,6 +129,7 @@ export default function PresupuestoPage() {
         height: 1123,
         pixelRatio: 2,
         backgroundColor: "#0c1a2e",
+        skipFonts: true,
       });
 
       const pdf = new jsPDF({
@@ -145,6 +169,8 @@ export default function PresupuestoPage() {
     } finally {
       if (scaleWrapper) scaleWrapper.style.transform = prevTransform;
       if (original.parentElement) original.parentElement.style.overflow = prevOverflow;
+      // Restaurar src originales de las imágenes
+      origSrcs.forEach(({ img, src }) => { img.src = src; });
     }
   };
 

@@ -7,8 +7,7 @@
       "Bash(git:*)",
       "Bash(rm -rf node_modules)",
       "Bash(npm install:*)",
-      "Bash(xargs wc:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(xargs wc:*)"
     ]
   }
 }

@@ -75,77 +75,119 @@ export default function PresupuestoPage() {
 
   const handleCompartir = async () => {
     const original = document.getElementById("print-area");
-    if (!original) return;
+    if (!original) {
+      window.print();
+      return;
+    }
 
-    // ── ÚNICO PATH: html-to-image + jsPDF (mobile y desktop).
-    // html-to-image usa SVG foreignObject: el propio browser renderiza
-    // el HTML, así que fuentes, SVGs y layout son idénticos en todos
-    // los dispositivos. Eliminamos html2canvas que re-interpretaba el
-    // CSS con su propio motor y causaba desfasajes en mobile.
-    const scaleWrapper = document.getElementById("print-scale-wrapper");
-    const prevTransform = scaleWrapper?.style.transform || "";
-    const prevOverflow = original.parentElement?.style.overflow || "";
+    if (isMobile) {
+      // ── MOBILE: capturamos el #print-area original (ya renderizado
+      // correctamente en pantalla) en lugar de clonarlo. Clones e iframes
+      // pierden SVGs de fondo y cambian métricas de fuentes.
+      // Quitamos el scale del wrapper temporalmente para que html2canvas
+      // lea el layout a tamaño real (794×1123).
+      const scaleWrapper = document.getElementById("print-scale-wrapper");
+      const prevTransform = scaleWrapper?.style.transform || "";
+      const prevOverflow = original.parentElement?.style.overflow || "";
 
-    try {
-      // Quitar scale para capturar a tamaño real (794×1123)
-      if (scaleWrapper) scaleWrapper.style.transform = "none";
-      if (original.parentElement) original.parentElement.style.overflow = "visible";
+      try {
+        // Quitar scale y mostrar a tamaño real temporalmente
+        if (scaleWrapper) {
+          scaleWrapper.style.transform = "none";
+        }
+        // El contenedor padre tiene overflow:hidden que recorta a tamaño
+        // escalado; lo removemos para que se vea completo
+        if (original.parentElement) {
+          original.parentElement.style.overflow = "visible";
+        }
 
-      await document.fonts.ready;
+        await document.fonts.ready;
 
-      const [htmlToImage, jsPDFmod] = await Promise.all([
-        import("html-to-image"),
-        import("jspdf"),
-      ]);
-      const jsPDF = jsPDFmod.jsPDF;
+        const [{ default: html2canvas }, jsPDFmod] = await Promise.all([
+          import("html2canvas"),
+          import("jspdf"),
+        ]);
+        const jsPDF = jsPDFmod.jsPDF;
 
-      // html-to-image captura usando el rendering nativo del browser
-      const dataUrl = await htmlToImage.toJpeg(original, {
-        quality: 0.95,
-        width: 794,
-        height: 1123,
-        pixelRatio: 2,
-        backgroundColor: "#0c1a2e",
-      });
+        // Capturamos el elemento original tal cual lo renderiza el browser
+        const canvas = await html2canvas(original, {
+          scale: 2,
+          backgroundColor: "#0c1a2e",
+          width: 794,
+          height: 1123,
+          useCORS: true,
+        });
 
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-      pdf.addImage(dataUrl, "JPEG", 0, 0, 210, 297, undefined, "FAST");
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+          compress: true,
+        });
+        pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
 
-      const fileName = `presupuesto-${(formData.nombre || "gtm")
-        .replace(/\s+/g, "-")
-        .toLowerCase()}.pdf`;
+        const fileName = `presupuesto-${(formData.nombre || "gtm")
+          .replace(/\s+/g, "-")
+          .toLowerCase()}.pdf`;
 
-      const pdfBlob = pdf.output("blob");
-      const file = new File([pdfBlob], fileName, { type: "application/pdf" });
-      const nav = navigator as Navigator & {
-        canShare?: (data: { files: File[] }) => boolean;
-        share?: (data: {
-          files?: File[];
-          title?: string;
-          text?: string;
-        }) => Promise<void>;
-      };
-      if (nav.canShare && nav.canShare({ files: [file] }) && nav.share) {
-        try {
-          await nav.share({ files: [file], title: "Presupuesto GTM" });
-        } catch {
+        const pdfBlob = pdf.output("blob");
+        const file = new File([pdfBlob], fileName, { type: "application/pdf" });
+        const nav = navigator as Navigator & {
+          canShare?: (data: { files: File[] }) => boolean;
+          share?: (data: {
+            files?: File[];
+            title?: string;
+            text?: string;
+          }) => Promise<void>;
+        };
+        if (nav.canShare && nav.canShare({ files: [file] }) && nav.share) {
+          try {
+            await nav.share({ files: [file], title: "Presupuesto GTM" });
+          } catch {
+            pdf.save(fileName);
+          }
+        } else {
           pdf.save(fileName);
         }
-      } else {
-        pdf.save(fileName);
+      } catch (err) {
+        console.error("Error generando PDF:", err);
+        alert("No se pudo generar el PDF. Intentá de nuevo.");
+      } finally {
+        // Restaurar scale y overflow
+        if (scaleWrapper) {
+          scaleWrapper.style.transform = prevTransform;
+        }
+        if (original.parentElement) {
+          original.parentElement.style.overflow = prevOverflow;
+        }
       }
-    } catch (err) {
-      console.error("Error generando PDF:", err);
-      alert("No se pudo generar el PDF. Intentá de nuevo.");
-    } finally {
-      if (scaleWrapper) scaleWrapper.style.transform = prevTransform;
-      if (original.parentElement) original.parentElement.style.overflow = prevOverflow;
+      return;
     }
+
+    // ── DESKTOP: window.print()
+    const existing = document.getElementById("print-clone");
+    if (existing) existing.remove();
+
+    const clone = original.cloneNode(true) as HTMLElement;
+    clone.id = "print-clone";
+    clone.style.transform = "none";
+    clone.style.width = "210mm";
+    clone.style.height = "297mm";
+    clone.style.minHeight = "0";
+    document.body.appendChild(clone);
+    document.body.classList.add("printing");
+
+    const cleanup = () => {
+      document.body.classList.remove("printing");
+      const c = document.getElementById("print-clone");
+      if (c) c.remove();
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+
+    window.print();
+    setTimeout(cleanup, 1500);
   };
 
   const handleLogout = async () => {

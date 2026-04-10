@@ -90,6 +90,12 @@ export default function PresupuestoPage() {
       document.body.appendChild(clone);
 
       try {
+        // Esperar a que las fuentes estén completamente cargadas para que
+        // html2canvas las use correctamente (en mobile suelen tardar más)
+        await document.fonts.ready;
+        // Pequeño delay para que el browser calcule el layout del clon
+        await new Promise((r) => setTimeout(r, 100));
+
         const [{ default: html2canvas }, jsPDFmod] = await Promise.all([
           import("html2canvas"),
           import("jspdf"),

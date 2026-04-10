@@ -532,6 +532,7 @@ const fieldValue: React.CSSProperties = {
   fontSize: "22px",
   fontWeight: 700,
   color: "#e2f0ff",
+  lineHeight: 1.3,
 };
 
 const thStyle: React.CSSProperties = {
@@ -543,6 +544,7 @@ const thStyle: React.CSSProperties = {
   letterSpacing: "4px",
   borderBottom: `2px solid ${NEON}`,
   textTransform: "uppercase",
+  lineHeight: 1.3,
 };
 
 const tdStyle: React.CSSProperties = {
@@ -550,6 +552,8 @@ const tdStyle: React.CSSProperties = {
   fontSize: "20px",
   borderBottom: `1px solid ${BLUE}22`,
   height: "44px",
+  lineHeight: 1.3,
+  verticalAlign: "middle",
 };
 
 const footerLabel: React.CSSProperties = {
@@ -565,6 +569,7 @@ const footerValue: React.CSSProperties = {
   fontSize: "17px",
   fontWeight: 600,
   color: "#7aabcc",
+  lineHeight: 1.3,
 };
 
 function GearShape({

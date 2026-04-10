@@ -6,7 +6,8 @@
       "Bash(npx tsc:*)",
       "Bash(git:*)",
       "Bash(rm -rf node_modules)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(xargs wc:*)"
     ]
   }
 }

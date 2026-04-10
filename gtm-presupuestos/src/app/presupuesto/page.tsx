@@ -4,12 +4,23 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
-import type { LineItem, PresupuestoData, PresupuestoGuardado } from "@/types/presupuesto";
-import { guardarPresupuesto, listarPresupuestos, eliminarPresupuesto } from "@/lib/presupuestos";
+import type {
+  LineItem,
+  PresupuestoData,
+  PresupuestoGuardado,
+} from "@/types/presupuesto";
+import {
+  guardarPresupuesto,
+  listarPresupuestos,
+  eliminarPresupuesto,
+} from "@/lib/presupuestos";
 import { useAuth } from "@/lib/auth-context";
 import { auth } from "@/lib/firebase";
 
-const PresupuestoPrint = dynamic(() => import("@/components/PresupuestoPrint"), { ssr: false });
+const PresupuestoPrint = dynamic(
+  () => import("@/components/PresupuestoPrint"),
+  { ssr: false }
+);
 
 // PDF design palette
 const BLUE = "#0ea5e9";
@@ -69,13 +80,28 @@ export default function PresupuestoPage() {
       return;
     }
 
-    // ── MOBILE: generamos el PDF con html2canvas + jsPDF para garantizar
-    // una sola página A4 sin márgenes del navegador (que es lo que en mobile
-    // hace que aparezca el "borde blanco" y se vaya a 2 hojas).
     if (isMobile) {
-      // Clonamos fuera de pantalla a tamaño real (794×1123) para capturarlo nítido
-      const existing = document.getElementById("print-capture");
-      if (existing) existing.remove();
+      // Limpieza previa
+      const existingWrapper = document.getElementById("print-capture-wrapper");
+      if (existingWrapper) existingWrapper.remove();
+
+      // ── FIX MOBILE: envolvemos el clon en un contenedor de 794px
+      // para que html2canvas lo capture con el contexto correcto,
+      // independientemente del viewport real del dispositivo.
+      // Con position:fixed el browser mobile calcula el layout
+      // usando el viewport real (ej: 390px) y html2canvas captura
+      // con ese ancho, causando los desfasajes. Con este wrapper
+      // el containing block siempre es 794px.
+      const wrapper = document.createElement("div");
+      wrapper.id = "print-capture-wrapper";
+      wrapper.style.position = "absolute";
+      wrapper.style.top = "0";
+      wrapper.style.left = "-10000px";
+      wrapper.style.width = "794px";
+      wrapper.style.height = "1123px";
+      wrapper.style.overflow = "hidden";
+      wrapper.style.zIndex = "-9999";
+      wrapper.style.pointerEvents = "none";
 
       const clone = original.cloneNode(true) as HTMLElement;
       clone.id = "print-capture";
@@ -83,17 +109,16 @@ export default function PresupuestoPage() {
       clone.style.width = "794px";
       clone.style.height = "1123px";
       clone.style.minHeight = "1123px";
-      clone.style.position = "fixed";
+      clone.style.position = "absolute";
       clone.style.top = "0";
-      clone.style.left = "-10000px";
-      clone.style.zIndex = "-1";
-      document.body.appendChild(clone);
+      clone.style.left = "0";
+      clone.style.zIndex = "1";
+
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
 
       try {
-        // Esperar a que las fuentes estén completamente cargadas para que
-        // html2canvas las use correctamente (en mobile suelen tardar más)
         await document.fonts.ready;
-        // Pequeño delay para que el browser calcule el layout del clon
         await new Promise((r) => setTimeout(r, 100));
 
         const [{ default: html2canvas }, jsPDFmod] = await Promise.all([
@@ -119,17 +144,21 @@ export default function PresupuestoPage() {
           format: "a4",
           compress: true,
         });
-        // A4 = 210 × 297 mm. Llenamos la hoja completa, sin márgenes.
         pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
 
-        const fileName = `presupuesto-${(formData.nombre || "gtm").replace(/\s+/g, "-").toLowerCase()}.pdf`;
+        const fileName = `presupuesto-${(formData.nombre || "gtm")
+          .replace(/\s+/g, "-")
+          .toLowerCase()}.pdf`;
 
-        // Si el navegador soporta Web Share con archivos, abrimos el sheet nativo
         const pdfBlob = pdf.output("blob");
         const file = new File([pdfBlob], fileName, { type: "application/pdf" });
         const nav = navigator as Navigator & {
           canShare?: (data: { files: File[] }) => boolean;
-          share?: (data: { files?: File[]; title?: string; text?: string }) => Promise<void>;
+          share?: (data: {
+            files?: File[];
+            title?: string;
+            text?: string;
+          }) => Promise<void>;
         };
         if (nav.canShare && nav.canShare({ files: [file] }) && nav.share) {
           try {
@@ -144,13 +173,13 @@ export default function PresupuestoPage() {
         console.error("Error generando PDF:", err);
         alert("No se pudo generar el PDF. Intentá de nuevo.");
       } finally {
-        const c = document.getElementById("print-capture");
-        if (c) c.remove();
+        const w = document.getElementById("print-capture-wrapper");
+        if (w) w.remove();
       }
       return;
     }
 
-    // ── DESKTOP: window.print() (ya funciona perfecto en una sola hoja)
+    // ── DESKTOP: window.print()
     const existing = document.getElementById("print-clone");
     if (existing) existing.remove();
 
@@ -221,11 +250,17 @@ export default function PresupuestoPage() {
 
   const removeItem = (i: number) => {
     const items = formData.items.filter((_, idx) => idx !== i);
-    setFormData((prev) => ({ ...prev, items: items.length ? items : [{ ...EMPTY_ITEM }] }));
+    setFormData((prev) => ({
+      ...prev,
+      items: items.length ? items : [{ ...EMPTY_ITEM }],
+    }));
   };
 
   const addItem = () => {
-    setFormData((prev) => ({ ...prev, items: [...prev.items, { ...EMPTY_ITEM }] }));
+    setFormData((prev) => ({
+      ...prev,
+      items: [...prev.items, { ...EMPTY_ITEM }],
+    }));
   };
 
   const handleGuardar = async () => {
@@ -250,14 +285,24 @@ export default function PresupuestoPage() {
   };
 
   const handleCargar = (p: PresupuestoGuardado) => {
-    setFormData({ nombre: p.nombre, vehiculo: p.vehiculo, items: p.items, total: p.total, moneda: p.moneda || "ARS" });
+    setFormData({
+      nombre: p.nombre,
+      vehiculo: p.vehiculo,
+      items: p.items,
+      total: p.total,
+      moneda: p.moneda || "ARS",
+    });
     setSaved(false);
     setShowPreview(false);
     setTab("nuevo");
   };
 
   const formatFecha = (d: Date) => {
-    return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "2-digit" });
+    return d.toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+    });
   };
 
   const formatTotal = (t: string, moneda: "ARS" | "USD" = "ARS") => {
@@ -312,8 +357,18 @@ export default function PresupuestoPage() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <pattern id="page-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke={NEON} strokeWidth="0.5" />
+          <pattern
+            id="page-grid"
+            width="40"
+            height="40"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M 40 0 L 0 0 0 40"
+              fill="none"
+              stroke={NEON}
+              strokeWidth="0.5"
+            />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#page-grid)" />
@@ -388,13 +443,19 @@ export default function PresupuestoPage() {
         >
           <button
             onClick={() => handleTabChange("nuevo")}
-            style={{ ...tabBtn(tab === "nuevo"), flex: isMobile ? 1 : "0 0 auto" }}
+            style={{
+              ...tabBtn(tab === "nuevo"),
+              flex: isMobile ? 1 : "0 0 auto",
+            }}
           >
             NUEVO
           </button>
           <button
             onClick={() => handleTabChange("historial")}
-            style={{ ...tabBtn(tab === "historial"), flex: isMobile ? 1 : "0 0 auto" }}
+            style={{
+              ...tabBtn(tab === "historial"),
+              flex: isMobile ? 1 : "0 0 auto",
+            }}
           >
             HISTORIAL
           </button>
@@ -424,7 +485,6 @@ export default function PresupuestoPage() {
               gap: "16px",
             }}
           >
-            {/* MANUAL EDIT Card */}
             <div style={cardStyle}>
               <div
                 style={{
@@ -440,12 +500,16 @@ export default function PresupuestoPage() {
                 EDITAR MANUALMENTE
               </div>
 
-              <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              <div
+                style={{ display: "flex", gap: "10px", marginBottom: "10px" }}
+              >
                 <div style={{ flex: 1 }}>
                   <label style={fieldLabelStyle}>NOMBRE</label>
                   <input
                     value={formData.nombre}
-                    onChange={(e) => setFormData((p) => ({ ...p, nombre: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, nombre: e.target.value }))
+                    }
                     style={inputStyle}
                     onFocus={(e) => (e.target.style.borderColor = NEON)}
                     onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
@@ -455,7 +519,9 @@ export default function PresupuestoPage() {
                   <label style={fieldLabelStyle}>VEHÍCULO</label>
                   <input
                     value={formData.vehiculo}
-                    onChange={(e) => setFormData((p) => ({ ...p, vehiculo: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, vehiculo: e.target.value }))
+                    }
                     style={inputStyle}
                     onFocus={(e) => (e.target.style.borderColor = NEON)}
                     onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
@@ -463,28 +529,60 @@ export default function PresupuestoPage() {
                 </div>
               </div>
 
-              {/* Items grid */}
               <div style={{ marginBottom: "8px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "70px 1fr 28px", gap: "4px", marginBottom: "6px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "70px 1fr 28px",
+                    gap: "4px",
+                    marginBottom: "6px",
+                  }}
+                >
                   <span style={fieldLabelStyle}>CANT.</span>
                   <span style={fieldLabelStyle}>DESCRIPCIÓN</span>
                   <span />
                 </div>
                 {formData.items.map((item, i) => (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "70px 1fr 28px", gap: "4px", marginBottom: "4px" }}>
+                  <div
+                    key={i}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "70px 1fr 28px",
+                      gap: "4px",
+                      marginBottom: "4px",
+                    }}
+                  >
                     <input
                       value={item.cantidad}
-                      onChange={(e) => updateItem(i, "cantidad", e.target.value)}
+                      onChange={(e) =>
+                        updateItem(i, "cantidad", e.target.value)
+                      }
                       placeholder="1"
-                      style={{ ...inputStyle, fontFamily: "'Orbitron', monospace", textAlign: "center", padding: "6px 4px", color: NEON }}
+                      style={{
+                        ...inputStyle,
+                        fontFamily: "'Orbitron', monospace",
+                        textAlign: "center",
+                        padding: "6px 4px",
+                        color: NEON,
+                      }}
                       onFocus={(e) => (e.target.style.borderColor = NEON)}
                       onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
                     />
                     <input
                       value={item.descripcion}
-                      onChange={(e) => updateItem(i, "descripcion", e.target.value.toUpperCase())}
+                      onChange={(e) =>
+                        updateItem(
+                          i,
+                          "descripcion",
+                          e.target.value.toUpperCase()
+                        )
+                      }
                       placeholder="DESCRIPCIÓN"
-                      style={{ ...inputStyle, padding: "6px 8px", textTransform: "uppercase" }}
+                      style={{
+                        ...inputStyle,
+                        padding: "6px 8px",
+                        textTransform: "uppercase",
+                      }}
                       onFocus={(e) => (e.target.style.borderColor = NEON)}
                       onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
                     />
@@ -501,8 +599,14 @@ export default function PresupuestoPage() {
                         alignItems: "center",
                         justifyContent: "center",
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = NEON; e.currentTarget.style.borderColor = NEON; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = `${BLUE}aa`; e.currentTarget.style.borderColor = `${BLUE}55`; }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = NEON;
+                        e.currentTarget.style.borderColor = NEON;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = `${BLUE}aa`;
+                        e.currentTarget.style.borderColor = `${BLUE}55`;
+                      }}
                     >
                       ×
                     </button>
@@ -527,22 +631,32 @@ export default function PresupuestoPage() {
                   fontFamily: "'Rajdhani', sans-serif",
                   textTransform: "uppercase",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = NEON; e.currentTarget.style.color = NEON; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${BLUE}66`; e.currentTarget.style.color = `${ACCENT}bb`; }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = NEON;
+                  e.currentTarget.style.color = NEON;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = `${BLUE}66`;
+                  e.currentTarget.style.color = `${ACCENT}bb`;
+                }}
               >
                 + agregar fila
               </button>
 
               <div style={{ marginBottom: "14px" }}>
                 <label style={fieldLabelStyle}>MONEDA</label>
-                <div style={{ display: "flex", gap: "6px", marginBottom: "10px" }}>
+                <div
+                  style={{ display: "flex", gap: "6px", marginBottom: "10px" }}
+                >
                   {(["ARS", "USD"] as const).map((m) => {
                     const active = formData.moneda === m;
                     return (
                       <button
                         key={m}
                         type="button"
-                        onClick={() => setFormData((p) => ({ ...p, moneda: m }))}
+                        onClick={() =>
+                          setFormData((p) => ({ ...p, moneda: m }))
+                        }
                         style={{
                           flex: 1,
                           padding: "8px 12px",
@@ -552,7 +666,9 @@ export default function PresupuestoPage() {
                           fontFamily: "'Orbitron', sans-serif",
                           cursor: "pointer",
                           borderRadius: "3px",
-                          border: active ? `1px solid ${NEON}` : `1px solid ${BLUE}55`,
+                          border: active
+                            ? `1px solid ${NEON}`
+                            : `1px solid ${BLUE}55`,
                           background: active
                             ? `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`
                             : "transparent",
@@ -566,10 +682,14 @@ export default function PresupuestoPage() {
                     );
                   })}
                 </div>
-                <label style={fieldLabelStyle}>{formData.moneda === "USD" ? "TOTAL USD" : "TOTAL $"}</label>
+                <label style={fieldLabelStyle}>
+                  {formData.moneda === "USD" ? "TOTAL USD" : "TOTAL $"}
+                </label>
                 <input
                   value={formData.total}
-                  onChange={(e) => setFormData((p) => ({ ...p, total: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, total: e.target.value }))
+                  }
                   placeholder="0"
                   style={{
                     ...inputStyle,
@@ -586,8 +706,14 @@ export default function PresupuestoPage() {
 
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 <button
-                  onClick={() => { setShowPreview(true); }}
-                  style={{ ...btnSecondary, flex: "1 1 120px", padding: isMobile ? "10px 8px" : "10px 18px" }}
+                  onClick={() => {
+                    setShowPreview(true);
+                  }}
+                  style={{
+                    ...btnSecondary,
+                    flex: "1 1 120px",
+                    padding: isMobile ? "10px 8px" : "10px 18px",
+                  }}
                 >
                   VER PREVIEW
                 </button>
@@ -596,15 +722,37 @@ export default function PresupuestoPage() {
                   disabled={saving || saved}
                   style={
                     saved
-                      ? { ...btnPrimary, flex: "1 1 120px", padding: isMobile ? "10px 8px" : "10px 18px", background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`, color: NEON, cursor: "default" }
-                      : { ...btnPrimary, flex: "1 1 120px", padding: isMobile ? "10px 8px" : "10px 18px", opacity: saving ? 0.6 : 1, cursor: saving ? "wait" : "pointer" }
+                      ? {
+                          ...btnPrimary,
+                          flex: "1 1 120px",
+                          padding: isMobile ? "10px 8px" : "10px 18px",
+                          background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`,
+                          color: NEON,
+                          cursor: "default",
+                        }
+                      : {
+                          ...btnPrimary,
+                          flex: "1 1 120px",
+                          padding: isMobile ? "10px 8px" : "10px 18px",
+                          opacity: saving ? 0.6 : 1,
+                          cursor: saving ? "wait" : "pointer",
+                        }
                   }
                 >
                   {saved ? "✓ GUARDADO" : saving ? "GUARDANDO..." : "GUARDAR"}
                 </button>
                 <button
-                  onClick={() => { setFormData(EMPTY_DATA); setShowPreview(false); setSaved(false); setSaveError(null); }}
-                  style={{ ...btnSecondary, flex: isMobile ? "1 1 100%" : "0 0 auto", padding: isMobile ? "10px 8px" : "10px 18px" }}
+                  onClick={() => {
+                    setFormData(EMPTY_DATA);
+                    setShowPreview(false);
+                    setSaved(false);
+                    setSaveError(null);
+                  }}
+                  style={{
+                    ...btnSecondary,
+                    flex: isMobile ? "1 1 100%" : "0 0 auto",
+                    padding: isMobile ? "10px 8px" : "10px 18px",
+                  }}
                 >
                   LIMPIAR
                 </button>
@@ -630,10 +778,19 @@ export default function PresupuestoPage() {
           </div>
 
           {/* RIGHT COLUMN — PREVIEW */}
-          <div style={{ flex: 1, minWidth: 0, width: isMobile ? "100%" : "auto" }}>
+          <div
+            style={{ flex: 1, minWidth: 0, width: isMobile ? "100%" : "auto" }}
+          >
             {showPreview ? (
               <div>
-                <div style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                    marginBottom: "14px",
+                    flexWrap: "wrap",
+                  }}
+                >
                   <button
                     onClick={handleGuardar}
                     disabled={saved}
@@ -675,7 +832,15 @@ export default function PresupuestoPage() {
                     boxShadow: `0 0 30px ${BLUE}33`,
                   }}
                 >
-                  <div id="print-scale-wrapper" ref={printRef} style={{ width: "794px", transformOrigin: "top left", transform: `scale(${previewScale})` }}>
+                  <div
+                    id="print-scale-wrapper"
+                    ref={printRef}
+                    style={{
+                      width: "794px",
+                      transformOrigin: "top left",
+                      transform: `scale(${previewScale})`,
+                    }}
+                  >
                     <PresupuestoPrint data={formData} />
                   </div>
                 </div>
@@ -707,14 +872,40 @@ export default function PresupuestoPage() {
 
       {/* TAB HISTORIAL */}
       {tab === "historial" && (
-        <div style={{ padding: isMobile ? "16px" : "24px", maxWidth: "900px", position: "relative", zIndex: 1 }}>
+        <div
+          style={{
+            padding: isMobile ? "16px" : "24px",
+            maxWidth: "900px",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
           {historialLoading && (
-            <div style={{ color: ACCENT, fontSize: "13px", letterSpacing: "3px", fontFamily: "'Orbitron', sans-serif" }}>CARGANDO...</div>
+            <div
+              style={{
+                color: ACCENT,
+                fontSize: "13px",
+                letterSpacing: "3px",
+                fontFamily: "'Orbitron', sans-serif",
+              }}
+            >
+              CARGANDO...
+            </div>
           )}
           {!historialLoading && historial.length === 0 && (
-            <div style={{ color: `${BLUE}aa`, fontSize: "13px", letterSpacing: "2px" }}>No hay presupuestos guardados.</div>
+            <div
+              style={{
+                color: `${BLUE}aa`,
+                fontSize: "13px",
+                letterSpacing: "2px",
+              }}
+            >
+              No hay presupuestos guardados.
+            </div>
           )}
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+          >
             {historial.map((p) => (
               <HistorialCard
                 key={p.id}
@@ -771,9 +962,26 @@ function HistorialCard({
       }}
     >
       <div>
-        <div style={{ fontWeight: 700, fontSize: isMobile ? "14px" : "16px", color: "#e2f0ff", letterSpacing: "1px" }}>{presupuesto.nombre}</div>
-        <div style={{ fontSize: "12px", color: `${ACCENT}99`, marginTop: "3px", letterSpacing: "1px" }}>
-          {presupuesto.vehiculo} · {presupuesto.items.filter((i) => i.descripcion).length} ítems
+        <div
+          style={{
+            fontWeight: 700,
+            fontSize: isMobile ? "14px" : "16px",
+            color: "#e2f0ff",
+            letterSpacing: "1px",
+          }}
+        >
+          {presupuesto.nombre}
+        </div>
+        <div
+          style={{
+            fontSize: "12px",
+            color: `${ACCENT}99`,
+            marginTop: "3px",
+            letterSpacing: "1px",
+          }}
+        >
+          {presupuesto.vehiculo} ·{" "}
+          {presupuesto.items.filter((i) => i.descripcion).length} ítems
         </div>
       </div>
       <div
@@ -785,10 +993,27 @@ function HistorialCard({
         }}
       >
         <div style={{ textAlign: isMobile ? "left" : "right" }}>
-          <div style={{ fontFamily: "'Orbitron', monospace", fontSize: isMobile ? "14px" : "16px", color: NEON, fontWeight: 700, textShadow: `0 0 10px ${NEON}55` }}>
+          <div
+            style={{
+              fontFamily: "'Orbitron', monospace",
+              fontSize: isMobile ? "14px" : "16px",
+              color: NEON,
+              fontWeight: 700,
+              textShadow: `0 0 10px ${NEON}55`,
+            }}
+          >
             {formatTotal(presupuesto.total, presupuesto.moneda)}
           </div>
-          <div style={{ fontSize: "11px", color: `${BLUE}aa`, marginTop: "2px", letterSpacing: "1px" }}>{formatFecha(presupuesto.creadoEn)}</div>
+          <div
+            style={{
+              fontSize: "11px",
+              color: `${BLUE}aa`,
+              marginTop: "2px",
+              letterSpacing: "1px",
+            }}
+          >
+            {formatFecha(presupuesto.creadoEn)}
+          </div>
         </div>
         {showActions && (
           <div style={{ display: "flex", gap: "6px" }}>
@@ -821,8 +1046,14 @@ function HistorialCard({
                 fontSize: "13px",
                 cursor: "pointer",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = NEON; e.currentTarget.style.borderColor = NEON; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = `${BLUE}aa`; e.currentTarget.style.borderColor = `${BLUE}55`; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = NEON;
+                e.currentTarget.style.borderColor = NEON;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = `${BLUE}aa`;
+                e.currentTarget.style.borderColor = `${BLUE}55`;
+              }}
             >
               ✕
             </button>

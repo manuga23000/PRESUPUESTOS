@@ -81,62 +81,27 @@ export default function PresupuestoPage() {
     }
 
     if (isMobile) {
-      // Limpieza previa
-      const existingIframe = document.getElementById("print-capture-iframe") as HTMLIFrameElement | null;
-      if (existingIframe) existingIframe.remove();
-
-      // ── FIX MOBILE: usamos un iframe con viewport propio de 794px.
-      // Un clon dentro del mismo document hereda el motor de rendering
-      // mobile (métricas de fuentes, sub-pixel, etc.) causando desfasajes.
-      // El iframe crea un contexto de rendering aislado donde el viewport
-      // es 794px, idéntico a como lo vería un navegador desktop.
-      const iframe = document.createElement("iframe");
-      iframe.id = "print-capture-iframe";
-      iframe.style.position = "fixed";
-      iframe.style.top = "0";
-      iframe.style.left = "-10000px";
-      iframe.style.width = "794px";
-      iframe.style.height = "1123px";
-      iframe.style.border = "none";
-      iframe.style.zIndex = "-9999";
-      iframe.style.pointerEvents = "none";
-      document.body.appendChild(iframe);
+      // ── MOBILE: capturamos el #print-area original (ya renderizado
+      // correctamente en pantalla) en lugar de clonarlo. Clones e iframes
+      // pierden SVGs de fondo y cambian métricas de fuentes.
+      // Quitamos el scale del wrapper temporalmente para que html2canvas
+      // lea el layout a tamaño real (794×1123).
+      const scaleWrapper = document.getElementById("print-scale-wrapper");
+      const prevTransform = scaleWrapper?.style.transform || "";
+      const prevOverflow = original.parentElement?.style.overflow || "";
 
       try {
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (!iframeDoc) throw new Error("No se pudo acceder al iframe");
-
-        // Copiamos los stylesheets y fuentes al iframe
-        iframeDoc.open();
-        iframeDoc.write(`<!DOCTYPE html><html><head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=794">
-          <link rel="preconnect" href="https://fonts.googleapis.com">
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-          <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { width: 794px; height: 1123px; overflow: hidden; background: #0c1a2e; }
-          </style>
-        </head><body></body></html>`);
-        iframeDoc.close();
-
-        // Clonamos el contenido dentro del iframe
-        const clone = original.cloneNode(true) as HTMLElement;
-        clone.id = "print-capture";
-        clone.style.transform = "none";
-        clone.style.width = "794px";
-        clone.style.height = "1123px";
-        clone.style.minHeight = "1123px";
-        clone.style.position = "relative";
-        iframeDoc.body.appendChild(clone);
-
-        // Esperamos a que las fuentes carguen dentro del iframe
-        if (iframe.contentDocument?.fonts) {
-          await iframe.contentDocument.fonts.ready;
+        // Quitar scale y mostrar a tamaño real temporalmente
+        if (scaleWrapper) {
+          scaleWrapper.style.transform = "none";
         }
-        // Delay extra para que el browser renderice completamente
-        await new Promise((r) => setTimeout(r, 300));
+        // El contenedor padre tiene overflow:hidden que recorta a tamaño
+        // escalado; lo removemos para que se vea completo
+        if (original.parentElement) {
+          original.parentElement.style.overflow = "visible";
+        }
+
+        await document.fonts.ready;
 
         const [{ default: html2canvas }, jsPDFmod] = await Promise.all([
           import("html2canvas"),
@@ -144,13 +109,12 @@ export default function PresupuestoPage() {
         ]);
         const jsPDF = jsPDFmod.jsPDF;
 
-        const canvas = await html2canvas(clone, {
+        // Capturamos el elemento original tal cual lo renderiza el browser
+        const canvas = await html2canvas(original, {
           scale: 2,
           backgroundColor: "#0c1a2e",
           width: 794,
           height: 1123,
-          windowWidth: 794,
-          windowHeight: 1123,
           useCORS: true,
         });
 
@@ -190,8 +154,13 @@ export default function PresupuestoPage() {
         console.error("Error generando PDF:", err);
         alert("No se pudo generar el PDF. Intentá de nuevo.");
       } finally {
-        const f = document.getElementById("print-capture-iframe");
-        if (f) f.remove();
+        // Restaurar scale y overflow
+        if (scaleWrapper) {
+          scaleWrapper.style.transform = prevTransform;
+        }
+        if (original.parentElement) {
+          original.parentElement.style.overflow = prevOverflow;
+        }
       }
       return;
     }

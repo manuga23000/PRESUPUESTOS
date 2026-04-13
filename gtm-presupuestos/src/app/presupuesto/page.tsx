@@ -73,99 +73,13 @@ export default function PresupuestoPage() {
     return () => window.removeEventListener("resize", calc);
   }, []);
 
-  const handleCompartir = async () => {
+  const handleCompartir = () => {
     const original = document.getElementById("print-area");
     if (!original) {
       window.print();
       return;
     }
 
-    if (isMobile) {
-      // ── MOBILE: capturamos el #print-area original (ya renderizado
-      // correctamente en pantalla) en lugar de clonarlo. Clones e iframes
-      // pierden SVGs de fondo y cambian métricas de fuentes.
-      // Quitamos el scale del wrapper temporalmente para que html2canvas
-      // lea el layout a tamaño real (794×1123).
-      const scaleWrapper = document.getElementById("print-scale-wrapper");
-      const prevTransform = scaleWrapper?.style.transform || "";
-      const prevOverflow = original.parentElement?.style.overflow || "";
-
-      try {
-        // Quitar scale y mostrar a tamaño real temporalmente
-        if (scaleWrapper) {
-          scaleWrapper.style.transform = "none";
-        }
-        // El contenedor padre tiene overflow:hidden que recorta a tamaño
-        // escalado; lo removemos para que se vea completo
-        if (original.parentElement) {
-          original.parentElement.style.overflow = "visible";
-        }
-
-        await document.fonts.ready;
-
-        const [{ default: html2canvas }, jsPDFmod] = await Promise.all([
-          import("html2canvas"),
-          import("jspdf"),
-        ]);
-        const jsPDF = jsPDFmod.jsPDF;
-
-        // Capturamos el elemento original tal cual lo renderiza el browser
-        const canvas = await html2canvas(original, {
-          scale: 2,
-          backgroundColor: "#0c1a2e",
-          width: 794,
-          height: 1123,
-          useCORS: true,
-        });
-
-        const imgData = canvas.toDataURL("image/jpeg", 0.95);
-        const pdf = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: "a4",
-          compress: true,
-        });
-        pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
-
-        const fileName = `presupuesto-${(formData.nombre || "gtm")
-          .replace(/\s+/g, "-")
-          .toLowerCase()}.pdf`;
-
-        const pdfBlob = pdf.output("blob");
-        const file = new File([pdfBlob], fileName, { type: "application/pdf" });
-        const nav = navigator as Navigator & {
-          canShare?: (data: { files: File[] }) => boolean;
-          share?: (data: {
-            files?: File[];
-            title?: string;
-            text?: string;
-          }) => Promise<void>;
-        };
-        if (nav.canShare && nav.canShare({ files: [file] }) && nav.share) {
-          try {
-            await nav.share({ files: [file], title: "Presupuesto GTM" });
-          } catch {
-            pdf.save(fileName);
-          }
-        } else {
-          pdf.save(fileName);
-        }
-      } catch (err) {
-        console.error("Error generando PDF:", err);
-        alert("No se pudo generar el PDF. Intentá de nuevo.");
-      } finally {
-        // Restaurar scale y overflow
-        if (scaleWrapper) {
-          scaleWrapper.style.transform = prevTransform;
-        }
-        if (original.parentElement) {
-          original.parentElement.style.overflow = prevOverflow;
-        }
-      }
-      return;
-    }
-
-    // ── DESKTOP: window.print()
     const existing = document.getElementById("print-clone");
     if (existing) existing.remove();
 

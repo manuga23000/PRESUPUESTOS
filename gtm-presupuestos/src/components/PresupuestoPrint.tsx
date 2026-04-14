@@ -145,85 +145,71 @@ export default function PresupuestoPrint({ data }: Props) {
         {/* ── HEADER ── */}
         <div
           style={{
-            display: "table",
-            width: "100%",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             marginBottom: "28px",
           }}
         >
           {/* Logo */}
-          <div
-            style={{
-              display: "table-cell",
-              verticalAlign: "middle",
-              width: "50%",
-            }}
-          >
-            <div style={{ position: "relative" }}>
-              {/* Glow behind logo */}
+          <div style={{ position: "relative" }}>
+            {/* Glow behind logo */}
+            <div
+              style={{
+                position: "absolute",
+                inset: "-10px",
+                background: `radial-gradient(circle, ${BLUE}22 0%, transparent 70%)`,
+                borderRadius: "50%",
+              }}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/LOGO NEGRO.png"
+              alt="GTM"
+              style={{
+                height: "140px",
+                width: "auto",
+                display: "block",
+                position: "relative",
+                filter:
+                  "brightness(1.1) drop-shadow(0 0 12px rgba(14,165,233,0.4))",
+              }}
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+                (
+                  e.currentTarget.nextElementSibling as HTMLElement
+                ).style.display = "block";
+              }}
+            />
+            <div style={{ display: "none" }}>
               <div
                 style={{
-                  position: "absolute",
-                  inset: "-10px",
-                  background: `radial-gradient(circle, ${BLUE}22 0%, transparent 70%)`,
-                  borderRadius: "50%",
+                  fontSize: "56px",
+                  fontWeight: 900,
+                  letterSpacing: "6px",
+                  color: NEON,
+                  lineHeight: 1,
+                  textShadow: `0 0 20px ${NEON}66`,
+                  fontFamily: "'Orbitron', sans-serif",
                 }}
-              />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/LOGO NEGRO.png"
-                alt="GTM"
+              >
+                GTM
+              </div>
+              <div
                 style={{
-                  height: "140px",
-                  width: "auto",
-                  display: "block",
-                  position: "relative",
-                  filter:
-                    "brightness(1.1) drop-shadow(0 0 12px rgba(14,165,233,0.4))",
+                  fontSize: "11px",
+                  letterSpacing: "4px",
+                  color: BLUE,
+                  marginTop: "4px",
                 }}
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  (
-                    e.currentTarget.nextElementSibling as HTMLElement
-                  ).style.display = "block";
-                }}
-              />
-              <div style={{ display: "none" }}>
-                <div
-                  style={{
-                    fontSize: "56px",
-                    fontWeight: 900,
-                    letterSpacing: "6px",
-                    color: NEON,
-                    lineHeight: 1,
-                    textShadow: `0 0 20px ${NEON}66`,
-                    fontFamily: "'Orbitron', sans-serif",
-                  }}
-                >
-                  GTM
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    letterSpacing: "4px",
-                    color: BLUE,
-                    marginTop: "4px",
-                  }}
-                >
-                  GRANDOLI TALLER MECÁNICO
-                </div>
+              >
+                GRANDOLI TALLER MECÁNICO
               </div>
             </div>
           </div>
 
           {/* Título */}
-          <div
-            style={{
-              display: "table-cell",
-              verticalAlign: "middle",
-              textAlign: "right",
-              width: "50%",
-            }}
-          >
+          <div style={{ textAlign: "right" }}>
             <div
               style={{
                 fontSize: "11px",

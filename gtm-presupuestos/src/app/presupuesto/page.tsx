@@ -138,25 +138,8 @@ export default function PresupuestoPage() {
           .replace(/\s+/g, "-")
           .toLowerCase()}.pdf`;
 
-        const pdfBlob = pdf.output("blob");
-        const file = new File([pdfBlob], fileName, { type: "application/pdf" });
-        const nav = navigator as Navigator & {
-          canShare?: (data: { files: File[] }) => boolean;
-          share?: (data: {
-            files?: File[];
-            title?: string;
-            text?: string;
-          }) => Promise<void>;
-        };
-        if (nav.canShare && nav.canShare({ files: [file] }) && nav.share) {
-          try {
-            await nav.share({ files: [file], title: "Presupuesto GTM" });
-          } catch {
-            pdf.save(fileName);
-          }
-        } else {
-          pdf.save(fileName);
-        }
+        // Descarga directa (sin Web Share API)
+        pdf.save(fileName);
       } catch (err) {
         console.error("Error generando PDF:", err);
         alert("No se pudo generar el PDF. Intentá de nuevo.");

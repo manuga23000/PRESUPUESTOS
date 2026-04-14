@@ -138,8 +138,18 @@ export default function PresupuestoPage() {
           .replace(/\s+/g, "-")
           .toLowerCase()}.pdf`;
 
-        // Descarga directa (sin Web Share API)
-        pdf.save(fileName);
+        // Abrir el PDF en una pestaña nueva — en mobile esto funciona
+        // mejor que pdf.save() (los navegadores suelen bloquear la descarga
+        // programática). Desde la pestaña el usuario puede guardar/compartir.
+        const pdfBlob = pdf.output("blob");
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const newTab = window.open(blobUrl, "_blank");
+        if (!newTab) {
+          // Si el navegador bloquea window.open, caemos a save() como fallback
+          pdf.save(fileName);
+        }
+        // Liberamos la URL después de un rato
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
       } catch (err) {
         console.error("Error generando PDF:", err);
         alert("No se pudo generar el PDF. Intentá de nuevo.");

@@ -30,6 +30,24 @@ function getTodayStr(): string {
 
 const MIN_ROWS = 7;
 
+// ── SVG data-URI backgrounds (html2canvas renders these correctly) ──
+
+const gridSvg = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="${NEON}" stroke-width="0.5"/></svg>`
+)}`;
+
+const triangleTopRight = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 340"><polygon points="340,0 340,340 0,0" fill="${BLUE}"/></svg>`
+)}`;
+
+const triangleBottomLeft = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240"><polygon points="0,240 240,240 0,0" fill="${ACCENT}"/></svg>`
+)}`;
+
+const circlesSvg = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 1123"><circle cx="680" cy="160" r="180" fill="none" stroke="${NEON}" stroke-width="1"/><circle cx="680" cy="160" r="130" fill="none" stroke="${NEON}" stroke-width="0.5"/><circle cx="100" cy="900" r="120" fill="none" stroke="${BLUE}" stroke-width="1"/></svg>`
+)}`;
+
 export default function PresupuestoPrint({ data }: Props) {
   const today = getTodayStr();
   const rows = [...data.items];
@@ -52,40 +70,22 @@ export default function PresupuestoPrint({ data }: Props) {
         WebkitPrintColorAdjust: "exact",
       }}
     >
-      {/* GRID PATTERN BACKGROUND */}
-      <svg
+      {/* GRID PATTERN — CSS background-image en vez de SVG inline */}
+      <div
         style={{
           position: "absolute",
           inset: 0,
-          width: "100%",
-          height: "100%",
           opacity: 0.06,
           pointerEvents: "none",
           zIndex: 0,
+          backgroundImage: `url("${gridSvg}")`,
+          backgroundRepeat: "repeat",
+          backgroundSize: "40px 40px",
         }}
-        viewBox="0 0 794 1123"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <pattern
-            id="grid"
-            width="40"
-            height="40"
-            patternUnits="userSpaceOnUse"
-          >
-            <path
-              d="M 40 0 L 0 0 0 40"
-              fill="none"
-              stroke={NEON}
-              strokeWidth="0.5"
-            />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-      </svg>
+      />
 
       {/* DIAGONAL ACCENT — top right */}
-      <svg
+      <div
         style={{
           position: "absolute",
           top: 0,
@@ -95,15 +95,13 @@ export default function PresupuestoPrint({ data }: Props) {
           opacity: 0.12,
           pointerEvents: "none",
           zIndex: 0,
+          backgroundImage: `url("${triangleTopRight}")`,
+          backgroundSize: "cover",
         }}
-        viewBox="0 0 340 340"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <polygon points="340,0 340,340 0,0" fill={BLUE} />
-      </svg>
+      />
 
       {/* DIAGONAL ACCENT — bottom left */}
-      <svg
+      <div
         style={{
           position: "absolute",
           bottom: 0,
@@ -113,52 +111,23 @@ export default function PresupuestoPrint({ data }: Props) {
           opacity: 0.08,
           pointerEvents: "none",
           zIndex: 0,
+          backgroundImage: `url("${triangleBottomLeft}")`,
+          backgroundSize: "cover",
         }}
-        viewBox="0 0 240 240"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <polygon points="0,240 240,240 0,0" fill={ACCENT} />
-      </svg>
+      />
 
       {/* NEON GLOW CIRCLES */}
-      <svg
+      <div
         style={{
           position: "absolute",
           inset: 0,
-          width: "100%",
-          height: "100%",
           opacity: 0.07,
           pointerEvents: "none",
           zIndex: 0,
+          backgroundImage: `url("${circlesSvg}")`,
+          backgroundSize: "cover",
         }}
-        viewBox="0 0 794 1123"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <circle
-          cx="680"
-          cy="160"
-          r="180"
-          fill="none"
-          stroke={NEON}
-          strokeWidth="1"
-        />
-        <circle
-          cx="680"
-          cy="160"
-          r="130"
-          fill="none"
-          stroke={NEON}
-          strokeWidth="0.5"
-        />
-        <circle
-          cx="100"
-          cy="900"
-          r="120"
-          fill="none"
-          stroke={BLUE}
-          strokeWidth="1"
-        />
-      </svg>
+      />
 
       {/* TOP ACCENT BAR — neon line */}
       <div
@@ -176,71 +145,85 @@ export default function PresupuestoPrint({ data }: Props) {
         {/* ── HEADER ── */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: "table",
+            width: "100%",
             marginBottom: "28px",
           }}
         >
           {/* Logo */}
-          <div style={{ position: "relative" }}>
-            {/* Glow behind logo */}
-            <div
-              style={{
-                position: "absolute",
-                inset: "-10px",
-                background: `radial-gradient(circle, ${BLUE}22 0%, transparent 70%)`,
-                borderRadius: "50%",
-              }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/LOGO NEGRO.png"
-              alt="GTM"
-              style={{
-                height: "140px",
-                width: "auto",
-                display: "block",
-                position: "relative",
-                filter:
-                  "brightness(1.1) drop-shadow(0 0 12px rgba(14,165,233,0.4))",
-              }}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-                (
-                  e.currentTarget.nextElementSibling as HTMLElement
-                ).style.display = "block";
-              }}
-            />
-            <div style={{ display: "none" }}>
+          <div
+            style={{
+              display: "table-cell",
+              verticalAlign: "middle",
+              width: "50%",
+            }}
+          >
+            <div style={{ position: "relative" }}>
+              {/* Glow behind logo */}
               <div
                 style={{
-                  fontSize: "56px",
-                  fontWeight: 900,
-                  letterSpacing: "6px",
-                  color: NEON,
-                  lineHeight: 1,
-                  textShadow: `0 0 20px ${NEON}66`,
-                  fontFamily: "'Orbitron', sans-serif",
+                  position: "absolute",
+                  inset: "-10px",
+                  background: `radial-gradient(circle, ${BLUE}22 0%, transparent 70%)`,
+                  borderRadius: "50%",
                 }}
-              >
-                GTM
-              </div>
-              <div
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/LOGO NEGRO.png"
+                alt="GTM"
                 style={{
-                  fontSize: "11px",
-                  letterSpacing: "4px",
-                  color: BLUE,
-                  marginTop: "4px",
+                  height: "140px",
+                  width: "auto",
+                  display: "block",
+                  position: "relative",
+                  filter:
+                    "brightness(1.1) drop-shadow(0 0 12px rgba(14,165,233,0.4))",
                 }}
-              >
-                GRANDOLI TALLER MECÁNICO
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  (
+                    e.currentTarget.nextElementSibling as HTMLElement
+                  ).style.display = "block";
+                }}
+              />
+              <div style={{ display: "none" }}>
+                <div
+                  style={{
+                    fontSize: "56px",
+                    fontWeight: 900,
+                    letterSpacing: "6px",
+                    color: NEON,
+                    lineHeight: 1,
+                    textShadow: `0 0 20px ${NEON}66`,
+                    fontFamily: "'Orbitron', sans-serif",
+                  }}
+                >
+                  GTM
+                </div>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    letterSpacing: "4px",
+                    color: BLUE,
+                    marginTop: "4px",
+                  }}
+                >
+                  GRANDOLI TALLER MECÁNICO
+                </div>
               </div>
             </div>
           </div>
 
           {/* Título */}
-          <div style={{ textAlign: "right" }}>
+          <div
+            style={{
+              display: "table-cell",
+              verticalAlign: "middle",
+              textAlign: "right",
+              width: "50%",
+            }}
+          >
             <div
               style={{
                 fontSize: "11px",
@@ -269,8 +252,7 @@ export default function PresupuestoPrint({ data }: Props) {
             {/* Date badge */}
             <div
               style={{
-                display: "inline-flex",
-                alignItems: "center",
+                display: "inline-block",
                 marginTop: "12px",
                 background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`,
                 color: "#fff",
@@ -281,6 +263,7 @@ export default function PresupuestoPrint({ data }: Props) {
                 clipPath:
                   "polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%)",
                 boxShadow: `0 0 16px ${BLUE}55`,
+                lineHeight: "20px",
               }}
             >
               {today}
@@ -301,19 +284,24 @@ export default function PresupuestoPrint({ data }: Props) {
         {/* ── DATOS CLIENTE ── */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "14px",
+            display: "table",
+            width: "100%",
+            borderSpacing: "14px 0",
+            marginLeft: "-14px",
             marginBottom: "26px",
           }}
         >
-          <div style={fieldBox}>
-            <div style={fieldLabel}>NOMBRE DEL CLIENTE</div>
-            <div style={fieldValue}>{data.nombre || "—"}</div>
+          <div style={{ display: "table-cell", width: "50%" }}>
+            <div style={fieldBox}>
+              <div style={fieldLabel}>NOMBRE DEL CLIENTE</div>
+              <div style={fieldValue}>{data.nombre || "—"}</div>
+            </div>
           </div>
-          <div style={fieldBox}>
-            <div style={fieldLabel}>VEHÍCULO</div>
-            <div style={fieldValue}>{data.vehiculo || "—"}</div>
+          <div style={{ display: "table-cell", width: "50%" }}>
+            <div style={fieldBox}>
+              <div style={fieldLabel}>VEHÍCULO</div>
+              <div style={fieldValue}>{data.vehiculo || "—"}</div>
+            </div>
           </div>
         </div>
 
@@ -368,51 +356,51 @@ export default function PresupuestoPrint({ data }: Props) {
         {/* ── TOTAL ── */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "flex-end",
+            textAlign: "right",
             marginTop: "6px",
           }}
         >
           <div
             style={{
-              display: "flex",
-              alignItems: "stretch",
+              display: "inline-table",
               minWidth: "360px",
               border: `2px solid ${BLUE}`,
+              borderSpacing: 0,
             }}
           >
-            <div
-              style={{
-                fontSize: "14px",
-                fontWeight: 700,
-                letterSpacing: "5px",
-                color: ACCENT,
-                fontFamily: "'Orbitron', sans-serif",
-                backgroundColor: BLUE_MID,
-                padding: "20px 32px",
-                display: "flex",
-                alignItems: "center",
-                flex: 1,
-              }}
-            >
-              TOTAL
-            </div>
-            <div
-              style={{
-                fontSize: "32px",
-                fontWeight: 700,
-                fontFamily: "'Orbitron', sans-serif",
-                color: "#ffffff",
-                backgroundColor: BLUE_DARK,
-                padding: "20px 24px",
-                display: "flex",
-                alignItems: "center",
-                borderLeft: `2px solid ${BLUE}`,
-              }}
-            >
-              {data.moneda === "USD"
-                ? `${formatImporte(data.total)} usd`
-                : `$ ${formatImporte(data.total)}`}
+            <div style={{ display: "table-row" }}>
+              <div
+                style={{
+                  display: "table-cell",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  letterSpacing: "5px",
+                  color: ACCENT,
+                  fontFamily: "'Orbitron', sans-serif",
+                  backgroundColor: BLUE_MID,
+                  padding: "20px 32px",
+                  verticalAlign: "middle",
+                }}
+              >
+                TOTAL
+              </div>
+              <div
+                style={{
+                  display: "table-cell",
+                  fontSize: "32px",
+                  fontWeight: 700,
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: "#ffffff",
+                  backgroundColor: BLUE_DARK,
+                  padding: "20px 24px",
+                  verticalAlign: "middle",
+                  borderLeft: `2px solid ${BLUE}`,
+                }}
+              >
+                {data.moneda === "USD"
+                  ? `${formatImporte(data.total)} usd`
+                  : `$ ${formatImporte(data.total)}`}
+              </div>
             </div>
           </div>
         </div>
@@ -424,32 +412,38 @@ export default function PresupuestoPrint({ data }: Props) {
             border: `1px solid ${BLUE}`,
             borderLeft: `4px solid ${NEON}`,
             padding: "14px 22px",
-            display: "flex",
-            alignItems: "center",
-            gap: "14px",
+            display: "table",
+            width: "calc(100% - 48px)",
             backgroundColor: BLUE_MID,
             borderRadius: "0 4px 4px 0",
           }}
         >
           <div
             style={{
-              width: "32px",
-              height: "32px",
-              borderRadius: "50%",
-              backgroundColor: BLUE_DARK,
-              border: `2px solid ${NEON}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: NEON,
-              fontSize: "18px",
-              fontWeight: 900,
-              flexShrink: 0,
+              display: "table-cell",
+              verticalAlign: "middle",
+              width: "46px",
+              paddingRight: "14px",
             }}
           >
-            ✓
+            <div
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                backgroundColor: BLUE_DARK,
+                border: `2px solid ${NEON}`,
+                textAlign: "center",
+                lineHeight: "28px",
+                color: NEON,
+                fontSize: "18px",
+                fontWeight: 900,
+              }}
+            >
+              ✓
+            </div>
           </div>
-          <div>
+          <div style={{ display: "table-cell", verticalAlign: "middle" }}>
             <div
               style={{
                 fontWeight: 800,
@@ -473,20 +467,19 @@ export default function PresupuestoPrint({ data }: Props) {
             marginTop: "32px",
             paddingTop: "16px",
             borderTop: `1px solid ${BLUE}33`,
-            display: "flex",
-            justifyContent: "center",
-            gap: "48px",
+            display: "table",
+            width: "100%",
           }}
         >
-          <div style={{ textAlign: "center" }}>
+          <div style={{ display: "table-cell", textAlign: "center" }}>
             <div style={footerLabel}>DIRECCIÓN</div>
             <div style={footerValue}>Viale 291, San Nicolás</div>
           </div>
-          <div style={{ textAlign: "center" }}>
+          <div style={{ display: "table-cell", textAlign: "center" }}>
             <div style={footerLabel}>TELÉFONO</div>
             <div style={footerValue}>3364 694921</div>
           </div>
-          <div style={{ textAlign: "center" }}>
+          <div style={{ display: "table-cell", textAlign: "center" }}>
             <div style={footerLabel}>WEB</div>
             <div style={footerValue}>mecanicagrandoli.com.ar</div>
           </div>
@@ -552,7 +545,7 @@ const tdStyle: React.CSSProperties = {
   fontSize: "20px",
   borderBottom: `1px solid ${BLUE}22`,
   height: "44px",
-  lineHeight: 1.3,
+  lineHeight: "22px",
   verticalAlign: "middle",
 };
 
@@ -571,51 +564,3 @@ const footerValue: React.CSSProperties = {
   color: "#7aabcc",
   lineHeight: 1.3,
 };
-
-function GearShape({
-  cx,
-  cy,
-  r,
-  teeth,
-}: {
-  cx: number;
-  cy: number;
-  r: number;
-  teeth: number;
-}) {
-  const innerR = r * 0.7;
-  const toothH = r * 0.25;
-  const points: string[] = [];
-
-  for (let i = 0; i < teeth; i++) {
-    const angle = (i / teeth) * 2 * Math.PI;
-    const nextAngle = ((i + 0.5) / teeth) * 2 * Math.PI;
-    const midAngle = ((i + 0.25) / teeth) * 2 * Math.PI;
-
-    points.push(
-      `${cx + innerR * Math.cos(angle)},${cy + innerR * Math.sin(angle)}`
-    );
-    points.push(
-      `${cx + (r + toothH) * Math.cos(midAngle - 0.05)},${
-        cy + (r + toothH) * Math.sin(midAngle - 0.05)
-      }`
-    );
-    points.push(
-      `${cx + (r + toothH) * Math.cos(midAngle + 0.05)},${
-        cy + (r + toothH) * Math.sin(midAngle + 0.05)
-      }`
-    );
-    points.push(
-      `${cx + innerR * Math.cos(nextAngle)},${
-        cy + innerR * Math.sin(nextAngle)
-      }`
-    );
-  }
-
-  return (
-    <>
-      <polygon points={points.join(" ")} />
-      <circle cx={cx} cy={cy} r={r * 0.3} fill={BLUE_DEEP} />
-    </>
-  );
-}

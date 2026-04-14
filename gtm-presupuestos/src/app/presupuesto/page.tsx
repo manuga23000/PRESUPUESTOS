@@ -152,7 +152,9 @@ export default function PresupuestoPage() {
         setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
       } catch (err) {
         console.error("Error generando PDF:", err);
-        alert("No se pudo generar el PDF. Intentá de nuevo.");
+        const msg =
+          err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+        alert(`No se pudo generar el PDF.\n\n${msg}`);
       } finally {
         clone.remove();
       }

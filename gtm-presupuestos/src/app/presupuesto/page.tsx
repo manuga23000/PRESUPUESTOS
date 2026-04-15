@@ -304,7 +304,7 @@ export default function PresupuestoPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "'Orbitron', sans-serif",
+          fontFamily: "var(--font-orbitron), sans-serif",
           letterSpacing: "3px",
           fontSize: "13px",
         }}
@@ -320,7 +320,7 @@ export default function PresupuestoPage() {
         minHeight: "100vh",
         backgroundColor: BLUE_DEEP,
         color: "#e2f0ff",
-        fontFamily: "'Rajdhani', 'Arial', sans-serif",
+        fontFamily: "var(--font-rajdhani), 'Arial', sans-serif",
         position: "relative",
         overflow: "hidden",
       }}
@@ -388,7 +388,7 @@ export default function PresupuestoPage() {
             fontSize: isMobile ? "13px" : "16px",
             letterSpacing: isMobile ? "2px" : "4px",
             color: "#ffffff",
-            fontFamily: "'Orbitron', sans-serif",
+            fontFamily: "var(--font-orbitron), sans-serif",
             textShadow: `0 0 14px ${BLUE}66`,
             flex: isMobile ? "1 1 auto" : "0 0 auto",
           }}
@@ -407,7 +407,7 @@ export default function PresupuestoPage() {
             fontWeight: 700,
             letterSpacing: "2px",
             cursor: "pointer",
-            fontFamily: "'Orbitron', sans-serif",
+            fontFamily: "var(--font-orbitron), sans-serif",
             order: isMobile ? 2 : 3,
             marginLeft: isMobile ? "auto" : "auto",
           }}
@@ -475,7 +475,7 @@ export default function PresupuestoPage() {
                   marginBottom: "16px",
                   color: NEON,
                   letterSpacing: "4px",
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "var(--font-orbitron), sans-serif",
                   textShadow: `0 0 8px ${NEON}55`,
                 }}
               >
@@ -542,7 +542,7 @@ export default function PresupuestoPage() {
                       placeholder="1"
                       style={{
                         ...inputStyle,
-                        fontFamily: "'Orbitron', monospace",
+                        fontFamily: "var(--font-orbitron), monospace",
                         textAlign: "center",
                         padding: "6px 4px",
                         color: NEON,
@@ -610,7 +610,7 @@ export default function PresupuestoPage() {
                   padding: "8px 12px",
                   width: "100%",
                   marginBottom: "14px",
-                  fontFamily: "'Rajdhani', sans-serif",
+                  fontFamily: "var(--font-rajdhani), sans-serif",
                   textTransform: "uppercase",
                 }}
                 onMouseEnter={(e) => {
@@ -645,7 +645,7 @@ export default function PresupuestoPage() {
                           fontSize: "12px",
                           fontWeight: 800,
                           letterSpacing: "2px",
-                          fontFamily: "'Orbitron', sans-serif",
+                          fontFamily: "var(--font-orbitron), sans-serif",
                           cursor: "pointer",
                           borderRadius: "3px",
                           border: active
@@ -675,7 +675,7 @@ export default function PresupuestoPage() {
                   placeholder="0"
                   style={{
                     ...inputStyle,
-                    fontFamily: "'Orbitron', monospace",
+                    fontFamily: "var(--font-orbitron), monospace",
                     fontSize: "20px",
                     color: NEON,
                     fontWeight: 700,
@@ -787,7 +787,7 @@ export default function PresupuestoPage() {
                             fontWeight: 800,
                             fontSize: "13px",
                             letterSpacing: "3px",
-                            fontFamily: "'Orbitron', sans-serif",
+                            fontFamily: "var(--font-orbitron), sans-serif",
                             cursor: "default",
                             boxShadow: `0 0 12px ${NEON}55`,
                           }
@@ -841,7 +841,7 @@ export default function PresupuestoPage() {
                   color: `${ACCENT}88`,
                   fontSize: isMobile ? "11px" : "14px",
                   letterSpacing: isMobile ? "2px" : "3px",
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "var(--font-orbitron), sans-serif",
                   background: `linear-gradient(135deg, ${BLUE_MID}66, ${BLUE_DEEP}88)`,
                 }}
               >
@@ -868,7 +868,7 @@ export default function PresupuestoPage() {
                 color: ACCENT,
                 fontSize: "13px",
                 letterSpacing: "3px",
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "var(--font-orbitron), sans-serif",
               }}
             >
               CARGANDO...
@@ -977,7 +977,7 @@ function HistorialCard({
         <div style={{ textAlign: isMobile ? "left" : "right" }}>
           <div
             style={{
-              fontFamily: "'Orbitron', monospace",
+              fontFamily: "var(--font-orbitron), monospace",
               fontSize: isMobile ? "14px" : "16px",
               color: NEON,
               fontWeight: 700,
@@ -1011,7 +1011,7 @@ function HistorialCard({
                 fontWeight: 800,
                 letterSpacing: "2px",
                 cursor: "pointer",
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "var(--font-orbitron), sans-serif",
                 boxShadow: `0 0 10px ${NEON}55`,
               }}
             >
@@ -1063,7 +1063,7 @@ const fieldLabelStyle: React.CSSProperties = {
   display: "block",
   marginBottom: "5px",
   textTransform: "uppercase",
-  fontFamily: "'Rajdhani', sans-serif",
+  fontFamily: "var(--font-rajdhani), sans-serif",
 };
 
 const inputStyle: React.CSSProperties = {
@@ -1074,7 +1074,7 @@ const inputStyle: React.CSSProperties = {
   color: "#e2f0ff",
   padding: "8px 10px",
   fontSize: "14px",
-  fontFamily: "'Rajdhani', sans-serif",
+  fontFamily: "var(--font-rajdhani), sans-serif",
   fontWeight: 600,
   outline: "none",
   boxSizing: "border-box",
@@ -1091,7 +1091,7 @@ const btnPrimary: React.CSSProperties = {
   fontSize: "13px",
   letterSpacing: "3px",
   cursor: "pointer",
-  fontFamily: "'Orbitron', sans-serif",
+  fontFamily: "var(--font-orbitron), sans-serif",
   boxShadow: `0 0 14px ${NEON}55`,
   transition: "all 0.15s",
 };
@@ -1106,7 +1106,7 @@ const btnSecondary: React.CSSProperties = {
   fontSize: "13px",
   letterSpacing: "3px",
   cursor: "pointer",
-  fontFamily: "'Orbitron', sans-serif",
+  fontFamily: "var(--font-orbitron), sans-serif",
   transition: "all 0.15s",
 };
 
@@ -1119,7 +1119,7 @@ function tabBtn(active: boolean): React.CSSProperties {
     fontWeight: 800,
     fontSize: "12px",
     letterSpacing: "3px",
-    fontFamily: "'Orbitron', sans-serif",
+    fontFamily: "var(--font-orbitron), sans-serif",
     background: active
       ? `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`
       : "transparent",

@@ -63,7 +63,7 @@ export default function PresupuestoPrint({ data }: Props) {
         minHeight: "1123px",
         backgroundColor: BLUE_DEEP,
         color: "#e2f0ff",
-        fontFamily: "'Rajdhani', 'Arial', sans-serif",
+        fontFamily: "var(--font-rajdhani), 'Arial', sans-serif",
         boxSizing: "border-box",
         position: "relative",
         overflow: "hidden",
@@ -190,7 +190,7 @@ export default function PresupuestoPrint({ data }: Props) {
                   color: NEON,
                   lineHeight: 1,
                   textShadow: `0 0 20px ${NEON}66`,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "var(--font-orbitron), sans-serif",
                 }}
               >
                 GTM
@@ -230,7 +230,7 @@ export default function PresupuestoPrint({ data }: Props) {
                 color: "#ffffff",
                 lineHeight: 1,
                 textShadow: `0 0 30px ${BLUE}66`,
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "var(--font-orbitron), sans-serif",
               }}
             >
               PRESUPUESTO
@@ -317,7 +317,7 @@ export default function PresupuestoPrint({ data }: Props) {
                   style={{
                     ...tdStyle,
                     textAlign: "center",
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontFamily: "var(--font-orbitron), sans-serif",
                     fontWeight: item.cantidad ? 700 : 400,
                     color: item.cantidad ? NEON : "#2a4a6a",
                   }}
@@ -362,7 +362,7 @@ export default function PresupuestoPrint({ data }: Props) {
                   fontWeight: 700,
                   letterSpacing: "5px",
                   color: ACCENT,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "var(--font-orbitron), sans-serif",
                   backgroundColor: BLUE_MID,
                   padding: "20px 32px",
                   verticalAlign: "middle",
@@ -375,7 +375,7 @@ export default function PresupuestoPrint({ data }: Props) {
                   display: "table-cell",
                   fontSize: "32px",
                   fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "var(--font-orbitron), sans-serif",
                   color: "#ffffff",
                   backgroundColor: BLUE_DARK,
                   padding: "20px 24px",

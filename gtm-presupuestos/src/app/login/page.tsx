@@ -53,7 +53,7 @@ export default function LoginPage() {
         minHeight: "100vh",
         backgroundColor: BLUE_DEEP,
         color: "#e2f0ff",
-        fontFamily: "'Rajdhani', 'Arial', sans-serif",
+        fontFamily: "var(--font-rajdhani), 'Arial', sans-serif",
         position: "relative",
         overflow: "hidden",
         display: "flex",
@@ -103,7 +103,7 @@ export default function LoginPage() {
             fontSize: "18px",
             letterSpacing: "4px",
             color: "#ffffff",
-            fontFamily: "'Orbitron', sans-serif",
+            fontFamily: "var(--font-orbitron), sans-serif",
             textShadow: `0 0 14px ${BLUE}66`,
             textAlign: "center",
             marginBottom: "6px",
@@ -118,7 +118,7 @@ export default function LoginPage() {
             color: `${ACCENT}aa`,
             textAlign: "center",
             marginBottom: "26px",
-            fontFamily: "'Orbitron', sans-serif",
+            fontFamily: "var(--font-orbitron), sans-serif",
           }}
         >
           ACCESO RESTRINGIDO
@@ -184,7 +184,7 @@ export default function LoginPage() {
             fontSize: "13px",
             letterSpacing: "3px",
             cursor: submitting ? "wait" : "pointer",
-            fontFamily: "'Orbitron', sans-serif",
+            fontFamily: "var(--font-orbitron), sans-serif",
             boxShadow: `0 0 14px ${NEON}55`,
             opacity: submitting ? 0.6 : 1,
           }}
@@ -204,7 +204,7 @@ const labelStyle: React.CSSProperties = {
   display: "block",
   marginBottom: "6px",
   textTransform: "uppercase",
-  fontFamily: "'Rajdhani', sans-serif",
+  fontFamily: "var(--font-rajdhani), sans-serif",
 };
 
 const inputStyle: React.CSSProperties = {
@@ -215,7 +215,7 @@ const inputStyle: React.CSSProperties = {
   color: "#e2f0ff",
   padding: "12px 12px",
   fontSize: "16px",
-  fontFamily: "'Rajdhani', sans-serif",
+  fontFamily: "var(--font-rajdhani), sans-serif",
   fontWeight: 600,
   outline: "none",
   boxSizing: "border-box",

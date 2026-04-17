@@ -73,6 +73,8 @@ export default function PresupuestoPage() {
     return () => window.removeEventListener("resize", calc);
   }, []);
 
+  const [generando, setGenerando] = useState(false);
+
   const handleCompartir = async () => {
     const original = document.getElementById("print-area");
     if (!original) {
@@ -81,74 +83,45 @@ export default function PresupuestoPage() {
     }
 
     if (isMobile) {
-      // ── MOBILE: clon offscreen a tamaño real → html2canvas → jsPDF
-      // Creamos un clon fuera de pantalla para no tocar el elemento visible.
-      const clone = original.cloneNode(true) as HTMLElement;
-      clone.id = "";
-      clone.style.position = "fixed";
-      clone.style.left = "-9999px";
-      clone.style.top = "0";
-      clone.style.width = "794px";
-      clone.style.minHeight = "1123px";
-      clone.style.transform = "none";
-      clone.style.overflow = "visible";
-      clone.style.zIndex = "-1";
-      document.body.appendChild(clone);
-
+      // ── MOBILE: PDF generado en el servidor con Puppeteer (navegador real)
+      setGenerando(true);
       try {
-        // Esperar fuentes e imágenes
-        await document.fonts.ready;
-        const imgs = clone.querySelectorAll("img");
-        await Promise.all(
-          Array.from(imgs).map(
-            (img) =>
-              new Promise<void>((resolve) => {
-                if (img.complete) return resolve();
-                img.onload = () => resolve();
-                img.onerror = () => resolve();
-              })
-          )
-        );
-
-        const [{ default: html2canvas }, jsPDFmod] = await Promise.all([
-          import("html2canvas"),
-          import("jspdf"),
-        ]);
-        const jsPDF = jsPDFmod.jsPDF;
-
-        const canvas = await html2canvas(clone, {
-          scale: 2,
-          backgroundColor: "#0c1a2e",
-          width: 794,
-          height: 1123,
-          useCORS: true,
-          logging: false,
+        const res = await fetch("/api/generate-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
         });
 
-        const imgData = canvas.toDataURL("image/jpeg", 0.95);
-        const pdf = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: "a4",
-          compress: true,
-        });
-        pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: res.statusText }));
+          throw new Error(err.detail || "Error del servidor");
+        }
 
+        const pdfBlob = await res.blob();
         const fileName = `presupuesto-${(formData.nombre || "gtm")
           .replace(/\s+/g, "-")
           .toLowerCase()}.pdf`;
 
-        // Abrir el PDF en una pestaña nueva — en mobile esto funciona
-        // mejor que pdf.save() (los navegadores suelen bloquear la descarga
-        // programática). Desde la pestaña el usuario puede guardar/compartir.
-        const pdfBlob = pdf.output("blob");
+        // Intentar Web Share API (nativo en mobile)
+        if (navigator.share && navigator.canShare) {
+          const file = new File([pdfBlob], fileName, { type: "application/pdf" });
+          const shareData = { files: [file], title: "Presupuesto GTM" };
+          if (navigator.canShare(shareData)) {
+            await navigator.share(shareData);
+            return;
+          }
+        }
+
+        // Fallback: abrir en nueva pestaña
         const blobUrl = URL.createObjectURL(pdfBlob);
         const newTab = window.open(blobUrl, "_blank");
         if (!newTab) {
-          // Si el navegador bloquea window.open, caemos a save() como fallback
-          pdf.save(fileName);
+          // Si bloquea window.open, forzar descarga
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = fileName;
+          a.click();
         }
-        // Liberamos la URL después de un rato
         setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
       } catch (err) {
         console.error("Error generando PDF:", err);
@@ -156,7 +129,7 @@ export default function PresupuestoPage() {
           err instanceof Error ? `${err.name}: ${err.message}` : String(err);
         alert(`No se pudo generar el PDF.\n\n${msg}`);
       } finally {
-        clone.remove();
+        setGenerando(false);
       }
       return;
     }
@@ -798,9 +771,15 @@ export default function PresupuestoPage() {
                   </button>
                   <button
                     onClick={handleCompartir}
-                    style={{ ...btnSecondary, padding: "10px 22px" }}
+                    disabled={generando}
+                    style={{
+                      ...btnSecondary,
+                      padding: "10px 22px",
+                      opacity: generando ? 0.6 : 1,
+                      cursor: generando ? "wait" : "pointer",
+                    }}
                   >
-                    📤 COMPARTIR
+                    {generando ? "GENERANDO..." : "📤 COMPARTIR"}
                   </button>
                 </div>
                 <div

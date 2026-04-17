@@ -30,7 +30,7 @@ function getTodayStr(): string {
 
 const MIN_ROWS = 7;
 
-// ── SVG data-URI backgrounds (html2canvas renders these correctly) ──
+// ── SVG data-URI backgrounds ──
 
 const gridSvg = `data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="${NEON}" stroke-width="0.5"/></svg>`

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, Orbitron, Rajdhani } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import DesktopOnly from "@/components/DesktopOnly";
 
 const ibmPlexSans = IBM_Plex_Sans({
   variable: "--font-ibm-plex-sans",
@@ -29,8 +30,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({
@@ -44,7 +43,9 @@ export default function RootLayout({
       className={`${ibmPlexSans.variable} ${orbitron.variable} ${rajdhani.variable} h-full`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <DesktopOnly>{children}</DesktopOnly>
+        </AuthProvider>
       </body>
     </html>
   );

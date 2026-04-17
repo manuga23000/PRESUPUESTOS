@@ -47,7 +47,6 @@ export default function PresupuestoPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [previewScale, setPreviewScale] = useState(1);
   const [printHeight, setPrintHeight] = useState(1050);
-  const [isMobile, setIsMobile] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -63,9 +62,7 @@ export default function PresupuestoPage() {
   useEffect(() => {
     const calc = () => {
       const w = window.innerWidth;
-      const mobile = w < 768;
-      setIsMobile(mobile);
-      const available = mobile ? w - 32 : w - 340;
+      const available = w - 340;
       setPreviewScale(Math.min(1, available / 794));
     };
     calc();
@@ -73,24 +70,13 @@ export default function PresupuestoPage() {
     return () => window.removeEventListener("resize", calc);
   }, []);
 
-  const handleCompartir = async () => {
+  const handleCompartir = () => {
     const original = document.getElementById("print-area");
     if (!original) {
       window.print();
       return;
     }
 
-    if (isMobile) {
-      // ── MOBILE: abrir página dedicada de impresión
-      // Guardamos los datos en sessionStorage y abrimos /presupuesto/print
-      // Esa página renderiza el componente a pantalla completa y usa
-      // window.print() del navegador real del celular (Chrome/Safari).
-      sessionStorage.setItem("print-data", JSON.stringify(formData));
-      window.open("/presupuesto/print", "_blank");
-      return;
-    }
-
-    // ── DESKTOP: window.print()
     const existing = document.getElementById("print-clone");
     if (existing) existing.remove();
 
@@ -299,11 +285,10 @@ export default function PresupuestoPage() {
       <div
         style={{
           borderBottom: `1px solid ${BLUE}33`,
-          padding: isMobile ? "10px 14px" : "0 28px",
+          padding: "0 28px",
           display: "flex",
           alignItems: "center",
-          gap: isMobile ? "10px" : "24px",
-          flexWrap: "wrap",
+          gap: "24px",
           minHeight: "60px",
           position: "relative",
           zIndex: 2,
@@ -314,12 +299,11 @@ export default function PresupuestoPage() {
         <span
           style={{
             fontWeight: 900,
-            fontSize: isMobile ? "13px" : "16px",
-            letterSpacing: isMobile ? "2px" : "4px",
+            fontSize: "16px",
+            letterSpacing: "4px",
             color: "#ffffff",
             fontFamily: "var(--font-orbitron), sans-serif",
             textShadow: `0 0 14px ${BLUE}66`,
-            flex: isMobile ? "1 1 auto" : "0 0 auto",
           }}
         >
           GTM <span style={{ color: NEON }}>·</span> PRESUPUESTOS
@@ -331,14 +315,14 @@ export default function PresupuestoPage() {
             color: `${ACCENT}cc`,
             border: `1px solid ${BLUE}55`,
             borderRadius: "4px",
-            padding: isMobile ? "6px 10px" : "7px 14px",
-            fontSize: isMobile ? "10px" : "11px",
+            padding: "7px 14px",
+            fontSize: "11px",
             fontWeight: 700,
             letterSpacing: "2px",
             cursor: "pointer",
             fontFamily: "var(--font-orbitron), sans-serif",
-            order: isMobile ? 2 : 3,
-            marginLeft: isMobile ? "auto" : "auto",
+            order: 3,
+            marginLeft: "auto",
           }}
         >
           SALIR
@@ -347,26 +331,19 @@ export default function PresupuestoPage() {
           style={{
             display: "flex",
             gap: "6px",
-            marginLeft: isMobile ? 0 : "20px",
-            order: isMobile ? 3 : 2,
-            width: isMobile ? "100%" : "auto",
+            marginLeft: "20px",
+            order: 2,
           }}
         >
           <button
             onClick={() => handleTabChange("nuevo")}
-            style={{
-              ...tabBtn(tab === "nuevo"),
-              flex: isMobile ? 1 : "0 0 auto",
-            }}
+            style={tabBtn(tab === "nuevo")}
           >
             NUEVO
           </button>
           <button
             onClick={() => handleTabChange("historial")}
-            style={{
-              ...tabBtn(tab === "historial"),
-              flex: isMobile ? 1 : "0 0 auto",
-            }}
+            style={tabBtn(tab === "historial")}
           >
             HISTORIAL
           </button>
@@ -378,9 +355,9 @@ export default function PresupuestoPage() {
         <div
           style={{
             display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            gap: isMobile ? "16px" : "24px",
-            padding: isMobile ? "16px" : "24px",
+            flexDirection: "row",
+            gap: "24px",
+            padding: "24px",
             alignItems: "flex-start",
             position: "relative",
             zIndex: 1,
@@ -389,8 +366,7 @@ export default function PresupuestoPage() {
           {/* LEFT COLUMN */}
           <div
             style={{
-              flex: isMobile ? "1 1 auto" : "0 0 420px",
-              width: isMobile ? "100%" : "auto",
+              flex: "0 0 420px",
               display: "flex",
               flexDirection: "column",
               gap: "16px",
@@ -615,7 +591,7 @@ export default function PresupuestoPage() {
                 />
               </div>
 
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "8px" }}>
                 <button
                   onClick={() => {
                     setShowPreview(true);
@@ -623,7 +599,7 @@ export default function PresupuestoPage() {
                   style={{
                     ...btnSecondary,
                     flex: "1 1 120px",
-                    padding: isMobile ? "10px 8px" : "10px 18px",
+                    padding: "10px 18px",
                   }}
                 >
                   VER PREVIEW
@@ -636,7 +612,7 @@ export default function PresupuestoPage() {
                       ? {
                           ...btnPrimary,
                           flex: "1 1 120px",
-                          padding: isMobile ? "10px 8px" : "10px 18px",
+                          padding: "10px 18px",
                           background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`,
                           color: NEON,
                           cursor: "default",
@@ -644,7 +620,7 @@ export default function PresupuestoPage() {
                       : {
                           ...btnPrimary,
                           flex: "1 1 120px",
-                          padding: isMobile ? "10px 8px" : "10px 18px",
+                          padding: "10px 18px",
                           opacity: saving ? 0.6 : 1,
                           cursor: saving ? "wait" : "pointer",
                         }
@@ -661,8 +637,7 @@ export default function PresupuestoPage() {
                   }}
                   style={{
                     ...btnSecondary,
-                    flex: isMobile ? "1 1 100%" : "0 0 auto",
-                    padding: isMobile ? "10px 8px" : "10px 18px",
+                    padding: "10px 18px",
                   }}
                 >
                   LIMPIAR
@@ -689,9 +664,7 @@ export default function PresupuestoPage() {
           </div>
 
           {/* RIGHT COLUMN — PREVIEW */}
-          <div
-            style={{ flex: 1, minWidth: 0, width: isMobile ? "100%" : "auto" }}
-          >
+          <div style={{ flex: 1, minWidth: 0 }}>
             {showPreview ? (
               <div>
                 <div
@@ -699,7 +672,6 @@ export default function PresupuestoPage() {
                     display: "flex",
                     gap: "8px",
                     marginBottom: "14px",
-                    flexWrap: "wrap",
                   }}
                 >
                   <button
@@ -759,7 +731,7 @@ export default function PresupuestoPage() {
             ) : (
               <div
                 style={{
-                  height: isMobile ? "180px" : "400px",
+                  height: "400px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -768,8 +740,8 @@ export default function PresupuestoPage() {
                   border: `1px dashed ${BLUE}55`,
                   borderRadius: "8px",
                   color: `${ACCENT}88`,
-                  fontSize: isMobile ? "11px" : "14px",
-                  letterSpacing: isMobile ? "2px" : "3px",
+                  fontSize: "14px",
+                  letterSpacing: "3px",
                   fontFamily: "var(--font-orbitron), sans-serif",
                   background: `linear-gradient(135deg, ${BLUE_MID}66, ${BLUE_DEEP}88)`,
                 }}
@@ -785,7 +757,7 @@ export default function PresupuestoPage() {
       {tab === "historial" && (
         <div
           style={{
-            padding: isMobile ? "16px" : "24px",
+            padding: "24px",
             maxWidth: "900px",
             position: "relative",
             zIndex: 1,
@@ -825,7 +797,6 @@ export default function PresupuestoPage() {
                 formatTotal={formatTotal}
                 onCargar={handleCargar}
                 onEliminar={handleEliminar}
-                isMobile={isMobile}
               />
             ))}
           </div>
@@ -841,17 +812,14 @@ function HistorialCard({
   formatTotal,
   onCargar,
   onEliminar,
-  isMobile,
 }: {
   presupuesto: PresupuestoGuardado;
   formatFecha: (d: Date) => string;
   formatTotal: (t: string, moneda?: "ARS" | "USD") => string;
   onCargar: (p: PresupuestoGuardado) => void;
   onEliminar: (id: string) => void;
-  isMobile: boolean;
 }) {
   const [hover, setHover] = useState(false);
-  const showActions = hover || isMobile;
 
   return (
     <div
@@ -862,12 +830,10 @@ function HistorialCard({
         border: `1px solid ${hover ? NEON : `${BLUE}44`}`,
         borderLeft: `3px solid ${hover ? NEON : `${BLUE}88`}`,
         borderRadius: "4px",
-        padding: isMobile ? "12px 14px" : "14px 18px",
+        padding: "14px 18px",
         display: "flex",
-        flexDirection: isMobile ? "column" : "row",
-        alignItems: isMobile ? "stretch" : "center",
+        alignItems: "center",
         justifyContent: "space-between",
-        gap: isMobile ? "10px" : "0",
         transition: "all 0.15s",
         boxShadow: hover ? `0 0 16px ${NEON}33` : "none",
       }}
@@ -876,7 +842,7 @@ function HistorialCard({
         <div
           style={{
             fontWeight: 700,
-            fontSize: isMobile ? "14px" : "16px",
+            fontSize: "16px",
             color: "#e2f0ff",
             letterSpacing: "1px",
           }}
@@ -899,15 +865,15 @@ function HistorialCard({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: isMobile ? "10px" : "16px",
-          justifyContent: isMobile ? "space-between" : "flex-end",
+          gap: "16px",
+          justifyContent: "flex-end",
         }}
       >
-        <div style={{ textAlign: isMobile ? "left" : "right" }}>
+        <div style={{ textAlign: "right" }}>
           <div
             style={{
               fontFamily: "var(--font-orbitron), monospace",
-              fontSize: isMobile ? "14px" : "16px",
+              fontSize: "16px",
               color: NEON,
               fontWeight: 700,
               textShadow: `0 0 10px ${NEON}55`,
@@ -926,7 +892,7 @@ function HistorialCard({
             {formatFecha(presupuesto.creadoEn)}
           </div>
         </div>
-        {showActions && (
+        {hover && (
           <div style={{ display: "flex", gap: "6px" }}>
             <button
               onClick={() => onCargar(presupuesto)}

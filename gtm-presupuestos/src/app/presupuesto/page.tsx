@@ -73,8 +73,6 @@ export default function PresupuestoPage() {
     return () => window.removeEventListener("resize", calc);
   }, []);
 
-  const [generando, setGenerando] = useState(false);
-
   const handleCompartir = async () => {
     const original = document.getElementById("print-area");
     if (!original) {
@@ -83,54 +81,12 @@ export default function PresupuestoPage() {
     }
 
     if (isMobile) {
-      // ── MOBILE: PDF generado en el servidor con Puppeteer (navegador real)
-      setGenerando(true);
-      try {
-        const res = await fetch("/api/generate-pdf", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ detail: res.statusText }));
-          throw new Error(err.detail || "Error del servidor");
-        }
-
-        const pdfBlob = await res.blob();
-        const fileName = `presupuesto-${(formData.nombre || "gtm")
-          .replace(/\s+/g, "-")
-          .toLowerCase()}.pdf`;
-
-        // Intentar Web Share API (nativo en mobile)
-        if (navigator.share && navigator.canShare) {
-          const file = new File([pdfBlob], fileName, { type: "application/pdf" });
-          const shareData = { files: [file], title: "Presupuesto GTM" };
-          if (navigator.canShare(shareData)) {
-            await navigator.share(shareData);
-            return;
-          }
-        }
-
-        // Fallback: abrir en nueva pestaña
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        const newTab = window.open(blobUrl, "_blank");
-        if (!newTab) {
-          // Si bloquea window.open, forzar descarga
-          const a = document.createElement("a");
-          a.href = blobUrl;
-          a.download = fileName;
-          a.click();
-        }
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-      } catch (err) {
-        console.error("Error generando PDF:", err);
-        const msg =
-          err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-        alert(`No se pudo generar el PDF.\n\n${msg}`);
-      } finally {
-        setGenerando(false);
-      }
+      // ── MOBILE: abrir página dedicada de impresión
+      // Guardamos los datos en sessionStorage y abrimos /presupuesto/print
+      // Esa página renderiza el componente a pantalla completa y usa
+      // window.print() del navegador real del celular (Chrome/Safari).
+      sessionStorage.setItem("print-data", JSON.stringify(formData));
+      window.open("/presupuesto/print", "_blank");
       return;
     }
 
@@ -771,15 +727,9 @@ export default function PresupuestoPage() {
                   </button>
                   <button
                     onClick={handleCompartir}
-                    disabled={generando}
-                    style={{
-                      ...btnSecondary,
-                      padding: "10px 22px",
-                      opacity: generando ? 0.6 : 1,
-                      cursor: generando ? "wait" : "pointer",
-                    }}
+                    style={{ ...btnSecondary, padding: "10px 22px" }}
                   >
-                    {generando ? "GENERANDO..." : "📤 COMPARTIR"}
+                    📤 COMPARTIR
                   </button>
                 </div>
                 <div

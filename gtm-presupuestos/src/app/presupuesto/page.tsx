@@ -16,13 +16,13 @@ import {
 } from "@/lib/presupuestos";
 import { useAuth } from "@/lib/auth-context";
 import { auth } from "@/lib/firebase";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const PresupuestoPrint = dynamic(
   () => import("@/components/PresupuestoPrint"),
   { ssr: false }
 );
 
-// PDF design palette
 const BLUE = "#0ea5e9";
 const BLUE_DARK = "#0369a1";
 const BLUE_DEEP = "#0c1a2e";
@@ -42,7 +42,9 @@ const EMPTY_DATA: PresupuestoData = {
 export default function PresupuestoPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const isMobile = useIsMobile();
   const [tab, setTab] = useState<"nuevo" | "historial">("nuevo");
+  const [mobileView, setMobileView] = useState<"form" | "preview">("form");
   const [formData, setFormData] = useState<PresupuestoData>(EMPTY_DATA);
   const [showPreview, setShowPreview] = useState(false);
   const [previewScale, setPreviewScale] = useState(1);
@@ -62,8 +64,13 @@ export default function PresupuestoPage() {
   useEffect(() => {
     const calc = () => {
       const w = window.innerWidth;
-      const available = w - 340;
-      setPreviewScale(Math.min(1, available / 794));
+      if (w < 768) {
+        const available = w - 32;
+        setPreviewScale(Math.min(1, available / 794));
+      } else {
+        const available = w - 340;
+        setPreviewScale(Math.min(1, available / 794));
+      }
     };
     calc();
     window.addEventListener("resize", calc);
@@ -191,6 +198,7 @@ export default function PresupuestoPage() {
     });
     setSaved(false);
     setShowPreview(false);
+    setMobileView("form");
     setTab("nuevo");
   };
 
@@ -207,6 +215,11 @@ export default function PresupuestoPage() {
     if (isNaN(n)) return t;
     if (moneda === "USD") return `${n.toLocaleString("es-AR")} usd`;
     return `$${n.toLocaleString("es-AR")}`;
+  };
+
+  const handleVerPreview = () => {
+    setShowPreview(true);
+    if (isMobile) setMobileView("preview");
   };
 
   if (authLoading || !user) {
@@ -285,11 +298,14 @@ export default function PresupuestoPage() {
       <div
         style={{
           borderBottom: `1px solid ${BLUE}33`,
-          padding: "0 28px",
+          padding: isMobile ? "0 12px" : "0 28px",
           display: "flex",
-          alignItems: "center",
-          gap: "24px",
-          minHeight: "60px",
+          alignItems: isMobile ? "center" : "center",
+          flexWrap: isMobile ? "wrap" : "nowrap",
+          gap: isMobile ? "8px" : "24px",
+          minHeight: isMobile ? "auto" : "60px",
+          paddingTop: isMobile ? "10px" : "0",
+          paddingBottom: isMobile ? "10px" : "0",
           position: "relative",
           zIndex: 2,
           background: `linear-gradient(180deg, ${BLUE_MID}cc 0%, ${BLUE_DEEP}aa 100%)`,
@@ -299,8 +315,8 @@ export default function PresupuestoPage() {
         <span
           style={{
             fontWeight: 900,
-            fontSize: "16px",
-            letterSpacing: "4px",
+            fontSize: isMobile ? "13px" : "16px",
+            letterSpacing: isMobile ? "2px" : "4px",
             color: "#ffffff",
             fontFamily: "var(--font-orbitron), sans-serif",
             textShadow: `0 0 14px ${BLUE}66`,
@@ -315,13 +331,12 @@ export default function PresupuestoPage() {
             color: `${ACCENT}cc`,
             border: `1px solid ${BLUE}55`,
             borderRadius: "4px",
-            padding: "7px 14px",
-            fontSize: "11px",
+            padding: isMobile ? "5px 10px" : "7px 14px",
+            fontSize: isMobile ? "10px" : "11px",
             fontWeight: 700,
             letterSpacing: "2px",
             cursor: "pointer",
             fontFamily: "var(--font-orbitron), sans-serif",
-            order: 3,
             marginLeft: "auto",
           }}
         >
@@ -331,19 +346,27 @@ export default function PresupuestoPage() {
           style={{
             display: "flex",
             gap: "6px",
-            marginLeft: "20px",
-            order: 2,
+            width: isMobile ? "100%" : "auto",
+            order: isMobile ? 3 : 0,
           }}
         >
           <button
             onClick={() => handleTabChange("nuevo")}
-            style={tabBtn(tab === "nuevo")}
+            style={{
+              ...tabBtn(tab === "nuevo"),
+              flex: isMobile ? 1 : undefined,
+              padding: isMobile ? "8px 12px" : "8px 22px",
+            }}
           >
             NUEVO
           </button>
           <button
             onClick={() => handleTabChange("historial")}
-            style={tabBtn(tab === "historial")}
+            style={{
+              ...tabBtn(tab === "historial"),
+              flex: isMobile ? 1 : undefined,
+              padding: isMobile ? "8px 12px" : "8px 22px",
+            }}
           >
             HISTORIAL
           </button>
@@ -352,412 +375,618 @@ export default function PresupuestoPage() {
 
       {/* TAB NUEVO */}
       {tab === "nuevo" && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "24px",
-            padding: "24px",
-            alignItems: "flex-start",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {/* LEFT COLUMN */}
-          <div
-            style={{
-              flex: "0 0 420px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-            }}
-          >
-            <div style={cardStyle}>
-              <div
+        <>
+          {/* Mobile sub-tabs: EDITAR / PREVIEW */}
+          {isMobile && (
+            <div
+              style={{
+                display: "flex",
+                gap: "6px",
+                padding: "12px 12px 0",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              <button
+                onClick={() => setMobileView("form")}
                 style={{
-                  fontWeight: 800,
-                  fontSize: "13px",
-                  marginBottom: "16px",
-                  color: NEON,
-                  letterSpacing: "4px",
-                  fontFamily: "var(--font-orbitron), sans-serif",
-                  textShadow: `0 0 8px ${NEON}55`,
+                  ...mobileSubTab(mobileView === "form"),
+                  flex: 1,
                 }}
               >
-                EDITAR MANUALMENTE
-              </div>
-
-              <div
-                style={{ display: "flex", gap: "10px", marginBottom: "10px" }}
+                EDITAR
+              </button>
+              <button
+                onClick={() => {
+                  setShowPreview(true);
+                  setMobileView("preview");
+                }}
+                style={{
+                  ...mobileSubTab(mobileView === "preview"),
+                  flex: 1,
+                }}
               >
-                <div style={{ flex: 1 }}>
-                  <label style={fieldLabelStyle}>NOMBRE</label>
-                  <input
-                    value={formData.nombre}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, nombre: e.target.value }))
-                    }
-                    style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = NEON)}
-                    onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={fieldLabelStyle}>VEHÍCULO</label>
-                  <input
-                    value={formData.vehiculo}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, vehiculo: e.target.value }))
-                    }
-                    style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = NEON)}
-                    onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
-                  />
-                </div>
-              </div>
+                PREVIEW
+              </button>
+            </div>
+          )}
 
-              <div style={{ marginBottom: "8px" }}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "70px 1fr 28px",
-                    gap: "4px",
-                    marginBottom: "6px",
-                  }}
-                >
-                  <span style={fieldLabelStyle}>CANT.</span>
-                  <span style={fieldLabelStyle}>DESCRIPCIÓN</span>
-                  <span />
-                </div>
-                {formData.items.map((item, i) => (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: isMobile ? "column" : "row",
+              gap: isMobile ? "12px" : "24px",
+              padding: isMobile ? "12px" : "24px",
+              alignItems: "flex-start",
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            {/* LEFT COLUMN — FORM */}
+            {(!isMobile || mobileView === "form") && (
+              <div
+                style={{
+                  flex: isMobile ? "1 1 auto" : "0 0 420px",
+                  width: isMobile ? "100%" : undefined,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                <div style={{
+                  ...cardStyle,
+                  padding: isMobile ? "16px" : "22px",
+                }}>
                   <div
-                    key={i}
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "70px 1fr 28px",
-                      gap: "4px",
-                      marginBottom: "4px",
+                      fontWeight: 800,
+                      fontSize: isMobile ? "11px" : "13px",
+                      marginBottom: isMobile ? "12px" : "16px",
+                      color: NEON,
+                      letterSpacing: isMobile ? "2px" : "4px",
+                      fontFamily: "var(--font-orbitron), sans-serif",
+                      textShadow: `0 0 8px ${NEON}55`,
                     }}
                   >
+                    EDITAR MANUALMENTE
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: isMobile ? "column" : "row",
+                      gap: "10px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <label style={fieldLabelStyle}>NOMBRE</label>
+                      <input
+                        value={formData.nombre}
+                        onChange={(e) =>
+                          setFormData((p) => ({ ...p, nombre: e.target.value }))
+                        }
+                        style={inputStyle}
+                        onFocus={(e) => (e.target.style.borderColor = NEON)}
+                        onBlur={(e) =>
+                          (e.target.style.borderColor = `${BLUE}55`)
+                        }
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={fieldLabelStyle}>VEHÍCULO</label>
+                      <input
+                        value={formData.vehiculo}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            vehiculo: e.target.value,
+                          }))
+                        }
+                        style={inputStyle}
+                        onFocus={(e) => (e.target.style.borderColor = NEON)}
+                        onBlur={(e) =>
+                          (e.target.style.borderColor = `${BLUE}55`)
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: "8px" }}>
+                    {isMobile ? (
+                      /* Mobile: stacked item cards */
+                      formData.items.map((item, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            border: `1px solid ${BLUE}33`,
+                            borderRadius: "4px",
+                            padding: "10px",
+                            marginBottom: "8px",
+                            background: `${BLUE_DEEP}88`,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: "8px",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                color: `${ACCENT}88`,
+                                letterSpacing: "2px",
+                                fontFamily: "var(--font-orbitron), sans-serif",
+                              }}
+                            >
+                              ÍTEM {i + 1}
+                            </span>
+                            <button
+                              onClick={() => removeItem(i)}
+                              style={{
+                                backgroundColor: "transparent",
+                                border: `1px solid ${BLUE}55`,
+                                borderRadius: "4px",
+                                color: `${BLUE}aa`,
+                                cursor: "pointer",
+                                fontSize: "14px",
+                                width: "28px",
+                                height: "28px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "8px",
+                              marginBottom: "6px",
+                            }}
+                          >
+                            <div style={{ width: "60px" }}>
+                              <label style={fieldLabelStyle}>CANT.</label>
+                              <input
+                                value={item.cantidad}
+                                onChange={(e) =>
+                                  updateItem(i, "cantidad", e.target.value)
+                                }
+                                placeholder="1"
+                                style={{
+                                  ...inputStyle,
+                                  fontFamily:
+                                    "var(--font-orbitron), monospace",
+                                  textAlign: "center",
+                                  padding: "6px 4px",
+                                  color: NEON,
+                                }}
+                                onFocus={(e) =>
+                                  (e.target.style.borderColor = NEON)
+                                }
+                                onBlur={(e) =>
+                                  (e.target.style.borderColor = `${BLUE}55`)
+                                }
+                              />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <label style={fieldLabelStyle}>DESCRIPCIÓN</label>
+                              <input
+                                value={item.descripcion}
+                                onChange={(e) =>
+                                  updateItem(
+                                    i,
+                                    "descripcion",
+                                    e.target.value.toUpperCase()
+                                  )
+                                }
+                                placeholder="DESCRIPCIÓN"
+                                style={{
+                                  ...inputStyle,
+                                  padding: "6px 8px",
+                                  textTransform: "uppercase",
+                                }}
+                                onFocus={(e) =>
+                                  (e.target.style.borderColor = NEON)
+                                }
+                                onBlur={(e) =>
+                                  (e.target.style.borderColor = `${BLUE}55`)
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      /* Desktop: grid rows */
+                      <>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "70px 1fr 28px",
+                            gap: "4px",
+                            marginBottom: "6px",
+                          }}
+                        >
+                          <span style={fieldLabelStyle}>CANT.</span>
+                          <span style={fieldLabelStyle}>DESCRIPCIÓN</span>
+                          <span />
+                        </div>
+                        {formData.items.map((item, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "70px 1fr 28px",
+                              gap: "4px",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            <input
+                              value={item.cantidad}
+                              onChange={(e) =>
+                                updateItem(i, "cantidad", e.target.value)
+                              }
+                              placeholder="1"
+                              style={{
+                                ...inputStyle,
+                                fontFamily: "var(--font-orbitron), monospace",
+                                textAlign: "center",
+                                padding: "6px 4px",
+                                color: NEON,
+                              }}
+                              onFocus={(e) =>
+                                (e.target.style.borderColor = NEON)
+                              }
+                              onBlur={(e) =>
+                                (e.target.style.borderColor = `${BLUE}55`)
+                              }
+                            />
+                            <input
+                              value={item.descripcion}
+                              onChange={(e) =>
+                                updateItem(
+                                  i,
+                                  "descripcion",
+                                  e.target.value.toUpperCase()
+                                )
+                              }
+                              placeholder="DESCRIPCIÓN"
+                              style={{
+                                ...inputStyle,
+                                padding: "6px 8px",
+                                textTransform: "uppercase",
+                              }}
+                              onFocus={(e) =>
+                                (e.target.style.borderColor = NEON)
+                              }
+                              onBlur={(e) =>
+                                (e.target.style.borderColor = `${BLUE}55`)
+                              }
+                            />
+                            <button
+                              onClick={() => removeItem(i)}
+                              style={{
+                                backgroundColor: "transparent",
+                                border: `1px solid ${BLUE}55`,
+                                borderRadius: "4px",
+                                color: `${BLUE}aa`,
+                                cursor: "pointer",
+                                fontSize: "14px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.color = NEON;
+                                e.currentTarget.style.borderColor = NEON;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.color = `${BLUE}aa`;
+                                e.currentTarget.style.borderColor = `${BLUE}55`;
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={addItem}
+                    style={{
+                      backgroundColor: "transparent",
+                      border: `1px dashed ${BLUE}66`,
+                      borderRadius: "4px",
+                      color: `${ACCENT}bb`,
+                      cursor: "pointer",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      letterSpacing: "2px",
+                      padding: "8px 12px",
+                      width: "100%",
+                      marginBottom: "14px",
+                      fontFamily: "var(--font-rajdhani), sans-serif",
+                      textTransform: "uppercase",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = NEON;
+                      e.currentTarget.style.color = NEON;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = `${BLUE}66`;
+                      e.currentTarget.style.color = `${ACCENT}bb`;
+                    }}
+                  >
+                    + agregar fila
+                  </button>
+
+                  <div style={{ marginBottom: "14px" }}>
+                    <label style={fieldLabelStyle}>MONEDA</label>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "6px",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      {(["ARS", "USD"] as const).map((m) => {
+                        const active = formData.moneda === m;
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() =>
+                              setFormData((p) => ({ ...p, moneda: m }))
+                            }
+                            style={{
+                              flex: 1,
+                              padding: "8px 12px",
+                              fontSize: "12px",
+                              fontWeight: 800,
+                              letterSpacing: "2px",
+                              fontFamily: "var(--font-orbitron), sans-serif",
+                              cursor: "pointer",
+                              borderRadius: "3px",
+                              border: active
+                                ? `1px solid ${NEON}`
+                                : `1px solid ${BLUE}55`,
+                              background: active
+                                ? `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`
+                                : "transparent",
+                              color: active ? "#fff" : `${ACCENT}aa`,
+                              boxShadow: active
+                                ? `0 0 12px ${NEON}55`
+                                : "none",
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            {m === "ARS" ? "$ PESOS" : "USD"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <label style={fieldLabelStyle}>
+                      {formData.moneda === "USD" ? "TOTAL USD" : "TOTAL $"}
+                    </label>
                     <input
-                      value={item.cantidad}
+                      value={formData.total}
                       onChange={(e) =>
-                        updateItem(i, "cantidad", e.target.value)
+                        setFormData((p) => ({ ...p, total: e.target.value }))
                       }
-                      placeholder="1"
+                      placeholder="0"
                       style={{
                         ...inputStyle,
                         fontFamily: "var(--font-orbitron), monospace",
-                        textAlign: "center",
-                        padding: "6px 4px",
+                        fontSize: "20px",
                         color: NEON,
+                        fontWeight: 700,
+                        textAlign: "right",
                       }}
                       onFocus={(e) => (e.target.style.borderColor = NEON)}
-                      onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
-                    />
-                    <input
-                      value={item.descripcion}
-                      onChange={(e) =>
-                        updateItem(
-                          i,
-                          "descripcion",
-                          e.target.value.toUpperCase()
-                        )
+                      onBlur={(e) =>
+                        (e.target.style.borderColor = `${BLUE}55`)
                       }
-                      placeholder="DESCRIPCIÓN"
-                      style={{
-                        ...inputStyle,
-                        padding: "6px 8px",
-                        textTransform: "uppercase",
-                      }}
-                      onFocus={(e) => (e.target.style.borderColor = NEON)}
-                      onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
                     />
-                    <button
-                      onClick={() => removeItem(i)}
-                      style={{
-                        backgroundColor: "transparent",
-                        border: `1px solid ${BLUE}55`,
-                        borderRadius: "4px",
-                        color: `${BLUE}aa`,
-                        cursor: "pointer",
-                        fontSize: "14px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = NEON;
-                        e.currentTarget.style.borderColor = NEON;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = `${BLUE}aa`;
-                        e.currentTarget.style.borderColor = `${BLUE}55`;
-                      }}
-                    >
-                      ×
-                    </button>
                   </div>
-                ))}
-              </div>
 
-              <button
-                onClick={addItem}
-                style={{
-                  backgroundColor: "transparent",
-                  border: `1px dashed ${BLUE}66`,
-                  borderRadius: "4px",
-                  color: `${ACCENT}bb`,
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  letterSpacing: "2px",
-                  padding: "8px 12px",
-                  width: "100%",
-                  marginBottom: "14px",
-                  fontFamily: "var(--font-rajdhani), sans-serif",
-                  textTransform: "uppercase",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = NEON;
-                  e.currentTarget.style.color = NEON;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = `${BLUE}66`;
-                  e.currentTarget.style.color = `${ACCENT}bb`;
-                }}
-              >
-                + agregar fila
-              </button>
-
-              <div style={{ marginBottom: "14px" }}>
-                <label style={fieldLabelStyle}>MONEDA</label>
-                <div
-                  style={{ display: "flex", gap: "6px", marginBottom: "10px" }}
-                >
-                  {(["ARS", "USD"] as const).map((m) => {
-                    const active = formData.moneda === m;
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() =>
-                          setFormData((p) => ({ ...p, moneda: m }))
-                        }
-                        style={{
-                          flex: 1,
-                          padding: "8px 12px",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          letterSpacing: "2px",
-                          fontFamily: "var(--font-orbitron), sans-serif",
-                          cursor: "pointer",
-                          borderRadius: "3px",
-                          border: active
-                            ? `1px solid ${NEON}`
-                            : `1px solid ${BLUE}55`,
-                          background: active
-                            ? `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`
-                            : "transparent",
-                          color: active ? "#fff" : `${ACCENT}aa`,
-                          boxShadow: active ? `0 0 12px ${NEON}55` : "none",
-                          transition: "all 0.15s",
-                        }}
-                      >
-                        {m === "ARS" ? "$ PESOS" : "USD"}
-                      </button>
-                    );
-                  })}
-                </div>
-                <label style={fieldLabelStyle}>
-                  {formData.moneda === "USD" ? "TOTAL USD" : "TOTAL $"}
-                </label>
-                <input
-                  value={formData.total}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, total: e.target.value }))
-                  }
-                  placeholder="0"
-                  style={{
-                    ...inputStyle,
-                    fontFamily: "var(--font-orbitron), monospace",
-                    fontSize: "20px",
-                    color: NEON,
-                    fontWeight: 700,
-                    textAlign: "right",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = NEON)}
-                  onBlur={(e) => (e.target.style.borderColor = `${BLUE}55`)}
-                />
-              </div>
-
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  onClick={() => {
-                    setShowPreview(true);
-                  }}
-                  style={{
-                    ...btnSecondary,
-                    flex: "1 1 120px",
-                    padding: "10px 18px",
-                  }}
-                >
-                  VER PREVIEW
-                </button>
-                <button
-                  onClick={handleGuardar}
-                  disabled={saving || saved}
-                  style={
-                    saved
-                      ? {
-                          ...btnPrimary,
-                          flex: "1 1 120px",
-                          padding: "10px 18px",
-                          background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`,
-                          color: NEON,
-                          cursor: "default",
-                        }
-                      : {
-                          ...btnPrimary,
-                          flex: "1 1 120px",
-                          padding: "10px 18px",
-                          opacity: saving ? 0.6 : 1,
-                          cursor: saving ? "wait" : "pointer",
-                        }
-                  }
-                >
-                  {saved ? "✓ GUARDADO" : saving ? "GUARDANDO..." : "GUARDAR"}
-                </button>
-                <button
-                  onClick={() => {
-                    setFormData(EMPTY_DATA);
-                    setShowPreview(false);
-                    setSaved(false);
-                    setSaveError(null);
-                  }}
-                  style={{
-                    ...btnSecondary,
-                    padding: "10px 18px",
-                  }}
-                >
-                  LIMPIAR
-                </button>
-              </div>
-              {saveError && (
-                <div
-                  style={{
-                    marginTop: "10px",
-                    padding: "8px 12px",
-                    border: `1px solid #ff5577`,
-                    borderLeft: `3px solid #ff5577`,
-                    background: "#3a0e1a",
-                    color: "#ffb3c1",
-                    fontSize: "12px",
-                    letterSpacing: "1px",
-                    borderRadius: "3px",
-                  }}
-                >
-                  {saveError}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN — PREVIEW */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {showPreview ? (
-              <div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "8px",
-                    marginBottom: "14px",
-                  }}
-                >
-                  <button
-                    onClick={handleGuardar}
-                    disabled={saved}
-                    style={
-                      saved
-                        ? {
-                            background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`,
-                            color: NEON,
-                            border: `1px solid ${NEON}`,
-                            borderRadius: "4px",
-                            padding: "10px 22px",
-                            fontWeight: 800,
-                            fontSize: "13px",
-                            letterSpacing: "3px",
-                            fontFamily: "var(--font-orbitron), sans-serif",
-                            cursor: "default",
-                            boxShadow: `0 0 12px ${NEON}55`,
-                          }
-                        : { ...btnPrimary, padding: "10px 22px" }
-                    }
-                  >
-                    {saved ? "✓ GUARDADO" : "GUARDAR"}
-                  </button>
-                  <button
-                    onClick={handleCompartir}
-                    style={{ ...btnSecondary, padding: "10px 22px" }}
-                  >
-                    📤 COMPARTIR
-                  </button>
-                </div>
-                <div
-                  id="print-preview-container"
-                  style={{
-                    border: `1px solid ${BLUE}55`,
-                    borderRadius: "4px",
-                    width: `${794 * previewScale}px`,
-                    height: `${printHeight * previewScale}px`,
-                    overflow: "hidden",
-                    boxShadow: `0 0 30px ${BLUE}33`,
-                  }}
-                >
                   <div
-                    id="print-scale-wrapper"
-                    ref={printRef}
                     style={{
-                      width: "794px",
-                      transformOrigin: "top left",
-                      transform: `scale(${previewScale})`,
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "8px",
                     }}
                   >
-                    <PresupuestoPrint data={formData} />
+                    <button
+                      onClick={handleVerPreview}
+                      style={{
+                        ...btnSecondary,
+                        flex: "1 1 100px",
+                        padding: "10px 18px",
+                      }}
+                    >
+                      VER PREVIEW
+                    </button>
+                    <button
+                      onClick={handleGuardar}
+                      disabled={saving || saved}
+                      style={
+                        saved
+                          ? {
+                              ...btnPrimary,
+                              flex: "1 1 100px",
+                              padding: "10px 18px",
+                              background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`,
+                              color: NEON,
+                              cursor: "default",
+                            }
+                          : {
+                              ...btnPrimary,
+                              flex: "1 1 100px",
+                              padding: "10px 18px",
+                              opacity: saving ? 0.6 : 1,
+                              cursor: saving ? "wait" : "pointer",
+                            }
+                      }
+                    >
+                      {saved
+                        ? "✓ GUARDADO"
+                        : saving
+                          ? "GUARDANDO..."
+                          : "GUARDAR"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFormData(EMPTY_DATA);
+                        setShowPreview(false);
+                        setSaved(false);
+                        setSaveError(null);
+                      }}
+                      style={{
+                        ...btnSecondary,
+                        flex: isMobile ? "1 1 100%" : undefined,
+                        padding: "10px 18px",
+                      }}
+                    >
+                      LIMPIAR
+                    </button>
                   </div>
+                  {saveError && (
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        padding: "8px 12px",
+                        border: `1px solid #ff5577`,
+                        borderLeft: `3px solid #ff5577`,
+                        background: "#3a0e1a",
+                        color: "#ffb3c1",
+                        fontSize: "12px",
+                        letterSpacing: "1px",
+                        borderRadius: "3px",
+                      }}
+                    >
+                      {saveError}
+                    </div>
+                  )}
                 </div>
               </div>
-            ) : (
-              <div
-                style={{
-                  height: "400px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  padding: "0 16px",
-                  border: `1px dashed ${BLUE}55`,
-                  borderRadius: "8px",
-                  color: `${ACCENT}88`,
-                  fontSize: "14px",
-                  letterSpacing: "3px",
-                  fontFamily: "var(--font-orbitron), sans-serif",
-                  background: `linear-gradient(135deg, ${BLUE_MID}66, ${BLUE_DEEP}88)`,
-                }}
-              >
-                EL PRESUPUESTO APARECERÁ ACÁ
+            )}
+
+            {/* RIGHT COLUMN — PREVIEW */}
+            {(!isMobile || mobileView === "preview") && (
+              <div style={{ flex: 1, minWidth: 0, width: isMobile ? "100%" : undefined }}>
+                {showPreview ? (
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "8px",
+                        marginBottom: "14px",
+                      }}
+                    >
+                      <button
+                        onClick={handleGuardar}
+                        disabled={saved}
+                        style={
+                          saved
+                            ? {
+                                background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE_MID})`,
+                                color: NEON,
+                                border: `1px solid ${NEON}`,
+                                borderRadius: "4px",
+                                padding: "10px 22px",
+                                fontWeight: 800,
+                                fontSize: isMobile ? "11px" : "13px",
+                                letterSpacing: "3px",
+                                fontFamily: "var(--font-orbitron), sans-serif",
+                                cursor: "default",
+                                boxShadow: `0 0 12px ${NEON}55`,
+                                flex: isMobile ? 1 : undefined,
+                              }
+                            : {
+                                ...btnPrimary,
+                                padding: "10px 22px",
+                                flex: isMobile ? 1 : undefined,
+                              }
+                        }
+                      >
+                        {saved ? "✓ GUARDADO" : "GUARDAR"}
+                      </button>
+                      <button
+                        onClick={handleCompartir}
+                        style={{
+                          ...btnSecondary,
+                          padding: "10px 22px",
+                          flex: isMobile ? 1 : undefined,
+                        }}
+                      >
+                        COMPARTIR
+                      </button>
+                    </div>
+                    <div
+                      id="print-preview-container"
+                      style={{
+                        border: `1px solid ${BLUE}55`,
+                        borderRadius: "4px",
+                        width: isMobile ? "100%" : `${794 * previewScale}px`,
+                        height: `${printHeight * previewScale}px`,
+                        overflow: "hidden",
+                        boxShadow: `0 0 30px ${BLUE}33`,
+                      }}
+                    >
+                      <div
+                        id="print-scale-wrapper"
+                        ref={printRef}
+                        style={{
+                          width: "794px",
+                          transformOrigin: "top left",
+                          transform: `scale(${previewScale})`,
+                        }}
+                      >
+                        <PresupuestoPrint data={formData} />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      height: isMobile ? "200px" : "400px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      padding: "0 16px",
+                      border: `1px dashed ${BLUE}55`,
+                      borderRadius: "8px",
+                      color: `${ACCENT}88`,
+                      fontSize: isMobile ? "12px" : "14px",
+                      letterSpacing: "3px",
+                      fontFamily: "var(--font-orbitron), sans-serif",
+                      background: `linear-gradient(135deg, ${BLUE_MID}66, ${BLUE_DEEP}88)`,
+                    }}
+                  >
+                    EL PRESUPUESTO APARECERÁ ACÁ
+                  </div>
+                )}
               </div>
             )}
           </div>
-        </div>
+        </>
       )}
 
       {/* TAB HISTORIAL */}
       {tab === "historial" && (
         <div
           style={{
-            padding: "24px",
+            padding: isMobile ? "12px" : "24px",
             maxWidth: "900px",
             position: "relative",
             zIndex: 1,
@@ -797,6 +1026,7 @@ export default function PresupuestoPage() {
                 formatTotal={formatTotal}
                 onCargar={handleCargar}
                 onEliminar={handleEliminar}
+                isMobile={isMobile}
               />
             ))}
           </div>
@@ -812,14 +1042,17 @@ function HistorialCard({
   formatTotal,
   onCargar,
   onEliminar,
+  isMobile,
 }: {
   presupuesto: PresupuestoGuardado;
   formatFecha: (d: Date) => string;
   formatTotal: (t: string, moneda?: "ARS" | "USD") => string;
   onCargar: (p: PresupuestoGuardado) => void;
   onEliminar: (id: string) => void;
+  isMobile: boolean;
 }) {
   const [hover, setHover] = useState(false);
+  const showActions = isMobile || hover;
 
   return (
     <div
@@ -830,70 +1063,107 @@ function HistorialCard({
         border: `1px solid ${hover ? NEON : `${BLUE}44`}`,
         borderLeft: `3px solid ${hover ? NEON : `${BLUE}88`}`,
         borderRadius: "4px",
-        padding: "14px 18px",
+        padding: isMobile ? "12px" : "14px 18px",
         display: "flex",
-        alignItems: "center",
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "stretch" : "center",
         justifyContent: "space-between",
+        gap: isMobile ? "10px" : "0",
         transition: "all 0.15s",
         boxShadow: hover ? `0 0 16px ${NEON}33` : "none",
       }}
     >
-      <div>
-        <div
-          style={{
-            fontWeight: 700,
-            fontSize: "16px",
-            color: "#e2f0ff",
-            letterSpacing: "1px",
-          }}
-        >
-          {presupuesto.nombre}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: isMobile ? "14px" : "16px",
+              color: "#e2f0ff",
+              letterSpacing: "1px",
+            }}
+          >
+            {presupuesto.nombre}
+          </div>
+          <div
+            style={{
+              fontSize: "12px",
+              color: `${ACCENT}99`,
+              marginTop: "3px",
+              letterSpacing: "1px",
+            }}
+          >
+            {presupuesto.vehiculo} ·{" "}
+            {presupuesto.items.filter((i) => i.descripcion).length} ítems
+          </div>
         </div>
-        <div
-          style={{
-            fontSize: "12px",
-            color: `${ACCENT}99`,
-            marginTop: "3px",
-            letterSpacing: "1px",
-          }}
-        >
-          {presupuesto.vehiculo} ·{" "}
-          {presupuesto.items.filter((i) => i.descripcion).length} ítems
-        </div>
+        {isMobile && (
+          <div style={{ textAlign: "right" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-orbitron), monospace",
+                fontSize: "14px",
+                color: NEON,
+                fontWeight: 700,
+                textShadow: `0 0 10px ${NEON}55`,
+              }}
+            >
+              {formatTotal(presupuesto.total, presupuesto.moneda)}
+            </div>
+            <div
+              style={{
+                fontSize: "11px",
+                color: `${BLUE}aa`,
+                marginTop: "2px",
+                letterSpacing: "1px",
+              }}
+            >
+              {formatFecha(presupuesto.creadoEn)}
+            </div>
+          </div>
+        )}
       </div>
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "16px",
+          gap: isMobile ? "8px" : "16px",
           justifyContent: "flex-end",
         }}
       >
-        <div style={{ textAlign: "right" }}>
-          <div
-            style={{
-              fontFamily: "var(--font-orbitron), monospace",
-              fontSize: "16px",
-              color: NEON,
-              fontWeight: 700,
-              textShadow: `0 0 10px ${NEON}55`,
-            }}
-          >
-            {formatTotal(presupuesto.total, presupuesto.moneda)}
+        {!isMobile && (
+          <div style={{ textAlign: "right" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-orbitron), monospace",
+                fontSize: "16px",
+                color: NEON,
+                fontWeight: 700,
+                textShadow: `0 0 10px ${NEON}55`,
+              }}
+            >
+              {formatTotal(presupuesto.total, presupuesto.moneda)}
+            </div>
+            <div
+              style={{
+                fontSize: "11px",
+                color: `${BLUE}aa`,
+                marginTop: "2px",
+                letterSpacing: "1px",
+              }}
+            >
+              {formatFecha(presupuesto.creadoEn)}
+            </div>
           </div>
-          <div
-            style={{
-              fontSize: "11px",
-              color: `${BLUE}aa`,
-              marginTop: "2px",
-              letterSpacing: "1px",
-            }}
-          >
-            {formatFecha(presupuesto.creadoEn)}
-          </div>
-        </div>
-        {hover && (
-          <div style={{ display: "flex", gap: "6px" }}>
+        )}
+        {showActions && (
+          <div style={{ display: "flex", gap: "6px", flex: isMobile ? 1 : undefined }}>
             <button
               onClick={() => onCargar(presupuesto)}
               style={{
@@ -908,6 +1178,7 @@ function HistorialCard({
                 cursor: "pointer",
                 fontFamily: "var(--font-orbitron), sans-serif",
                 boxShadow: `0 0 10px ${NEON}55`,
+                flex: isMobile ? 1 : undefined,
               }}
             >
               CARGAR
@@ -1020,6 +1291,24 @@ function tabBtn(active: boolean): React.CSSProperties {
       : "transparent",
     color: active ? "#fff" : `${ACCENT}aa`,
     boxShadow: active ? `0 0 12px ${NEON}55` : "none",
+    transition: "all 0.15s",
+  };
+}
+
+function mobileSubTab(active: boolean): React.CSSProperties {
+  return {
+    padding: "6px 12px",
+    borderRadius: "3px",
+    border: active ? `1px solid ${NEON}66` : `1px solid ${BLUE}33`,
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "11px",
+    letterSpacing: "2px",
+    fontFamily: "var(--font-orbitron), sans-serif",
+    background: active
+      ? `linear-gradient(135deg, ${BLUE_DARK}88, ${BLUE}44)`
+      : "transparent",
+    color: active ? NEON : `${ACCENT}66`,
     transition: "all 0.15s",
   };
 }

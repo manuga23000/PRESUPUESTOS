@@ -8,7 +8,9 @@
       "Bash(rm -rf node_modules)",
       "Bash(npm install:*)",
       "Bash(xargs wc:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(& cmd /c \"cd /d `\"D:\\\\Desktop\\\\GTM PRESUPUESTOS\\\\PRESUPUESTOS\\\\gtm-presupuestos`\" && npx next build 2>&1\")"
     ]
   }
 }

@@ -22,7 +22,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) router.replace("/presupuesto");
+    if (!loading && user) router.replace("/");
   }, [user, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +32,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      router.replace("/presupuesto");
+      router.replace("/");
     } catch (err) {
       const code = (err as { code?: string }).code || "";
       if (code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) {

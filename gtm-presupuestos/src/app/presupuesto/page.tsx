@@ -17,6 +17,8 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { auth } from "@/lib/firebase";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import html2canvas from "html2canvas-pro";
+import { jsPDF } from "jspdf";
 
 const PresupuestoPrint = dynamic(
   () => import("@/components/PresupuestoPrint"),
@@ -77,35 +79,52 @@ export default function PresupuestoPage() {
     return () => window.removeEventListener("resize", calc);
   }, []);
 
-  const handleCompartir = () => {
+  const [descargando, setDescargando] = useState(false);
+
+  const handleCompartir = async () => {
     const original = document.getElementById("print-area");
-    if (!original) {
+    if (!original) return;
+
+    setDescargando(true);
+
+    try {
+      const existing = document.getElementById("print-clone");
+      if (existing) existing.remove();
+
+      const clone = original.cloneNode(true) as HTMLElement;
+      clone.id = "print-clone";
+      clone.style.transform = "none";
+      clone.style.width = "210mm";
+      clone.style.height = "297mm";
+      clone.style.minHeight = "0";
+      clone.style.position = "fixed";
+      clone.style.left = "-9999px";
+      clone.style.top = "0";
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
+
+      clone.remove();
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
+      pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
+
+      const fileName = formData.nombre
+        ? `Presupuesto_${formData.nombre.replace(/\s+/g, "_")}.pdf`
+        : "Presupuesto.pdf";
+      pdf.save(fileName);
+    } catch {
       window.print();
-      return;
+    } finally {
+      setDescargando(false);
     }
-
-    const existing = document.getElementById("print-clone");
-    if (existing) existing.remove();
-
-    const clone = original.cloneNode(true) as HTMLElement;
-    clone.id = "print-clone";
-    clone.style.transform = "none";
-    clone.style.width = "210mm";
-    clone.style.height = "297mm";
-    clone.style.minHeight = "0";
-    document.body.appendChild(clone);
-    document.body.classList.add("printing");
-
-    const cleanup = () => {
-      document.body.classList.remove("printing");
-      const c = document.getElementById("print-clone");
-      if (c) c.remove();
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-
-    window.print();
-    setTimeout(cleanup, 1500);
   };
 
   const handleLogout = async () => {
@@ -922,13 +941,15 @@ export default function PresupuestoPage() {
                       </button>
                       <button
                         onClick={handleCompartir}
+                        disabled={descargando}
                         style={{
                           ...btnSecondary,
                           padding: "10px 22px",
                           flex: isMobile ? 1 : undefined,
+                          opacity: descargando ? 0.6 : 1,
                         }}
                       >
-                        COMPARTIR
+                        {descargando ? "DESCARGANDO..." : "DESCARGAR PDF"}
                       </button>
                     </div>
                     <div

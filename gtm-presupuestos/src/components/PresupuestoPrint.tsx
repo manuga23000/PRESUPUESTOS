@@ -241,18 +241,23 @@ export default function PresupuestoPrint({ data }: Props) {
                 display: "inline-block",
                 marginTop: "12px",
                 background: `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`,
-                color: "#fff",
-                fontSize: "15px",
-                fontWeight: 700,
-                letterSpacing: "2px",
-                padding: "6px 18px",
-                clipPath:
-                  "polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%)",
                 boxShadow: `0 0 16px ${BLUE}55`,
-                lineHeight: "20px",
+                transform: "skewX(-8deg)",
+                padding: "6px 18px",
               }}
             >
-              {today}
+              <div
+                style={{
+                  color: "#fff",
+                  fontSize: "15px",
+                  fontWeight: 700,
+                  letterSpacing: "2px",
+                  lineHeight: "20px",
+                  transform: "skewX(8deg)",
+                }}
+              >
+                {today}
+              </div>
             </div>
           </div>
         </div>

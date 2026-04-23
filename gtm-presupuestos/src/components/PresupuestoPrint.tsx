@@ -164,7 +164,7 @@ export default function PresupuestoPrint({ data }: Props) {
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/LOGO NEGRO.png"
+              src="/presupuestos/LOGO NEGRO.png"
               alt="GTM"
               style={{
                 height: "140px",

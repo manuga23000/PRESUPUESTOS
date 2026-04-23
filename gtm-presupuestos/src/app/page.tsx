@@ -515,118 +515,6 @@ export default function PresupuestoPage() {
                   </div>
 
                   <div style={{ marginBottom: "8px" }}>
-                    {isMobile ? (
-                      /* Mobile: stacked item cards */
-                      formData.items.map((item, i) => (
-                        <div
-                          key={i}
-                          style={{
-                            border: `1px solid ${BLUE}33`,
-                            borderRadius: "4px",
-                            padding: "10px",
-                            marginBottom: "8px",
-                            background: `${BLUE_DEEP}88`,
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              marginBottom: "8px",
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: "10px",
-                                color: `${ACCENT}88`,
-                                letterSpacing: "2px",
-                                fontFamily: "var(--font-orbitron), sans-serif",
-                              }}
-                            >
-                              ÍTEM {i + 1}
-                            </span>
-                            <button
-                              onClick={() => removeItem(i)}
-                              style={{
-                                backgroundColor: "transparent",
-                                border: `1px solid ${BLUE}55`,
-                                borderRadius: "4px",
-                                color: `${BLUE}aa`,
-                                cursor: "pointer",
-                                fontSize: "14px",
-                                width: "28px",
-                                height: "28px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              ×
-                            </button>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "8px",
-                              marginBottom: "6px",
-                            }}
-                          >
-                            <div style={{ width: "60px" }}>
-                              <label style={fieldLabelStyle}>CANT.</label>
-                              <input
-                                value={item.cantidad}
-                                onChange={(e) =>
-                                  updateItem(i, "cantidad", e.target.value)
-                                }
-                                placeholder="1"
-                                style={{
-                                  ...inputStyle,
-                                  fontFamily:
-                                    "var(--font-orbitron), monospace",
-                                  textAlign: "center",
-                                  padding: "6px 4px",
-                                  color: NEON,
-                                }}
-                                onFocus={(e) =>
-                                  (e.target.style.borderColor = NEON)
-                                }
-                                onBlur={(e) =>
-                                  (e.target.style.borderColor = `${BLUE}55`)
-                                }
-                              />
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <label style={fieldLabelStyle}>DESCRIPCIÓN</label>
-                              <input
-                                value={item.descripcion}
-                                onChange={(e) =>
-                                  updateItem(
-                                    i,
-                                    "descripcion",
-                                    e.target.value.toUpperCase()
-                                  )
-                                }
-                                placeholder="DESCRIPCIÓN"
-                                style={{
-                                  ...inputStyle,
-                                  padding: "6px 8px",
-                                  textTransform: "uppercase",
-                                }}
-                                onFocus={(e) =>
-                                  (e.target.style.borderColor = NEON)
-                                }
-                                onBlur={(e) =>
-                                  (e.target.style.borderColor = `${BLUE}55`)
-                                }
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      /* Desktop: grid rows */
-                      <>
                         <div
                           style={{
                             display: "grid",
@@ -717,8 +605,6 @@ export default function PresupuestoPage() {
                             </button>
                           </div>
                         ))}
-                      </>
-                    )}
                   </div>
 
                   <button

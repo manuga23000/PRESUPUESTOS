@@ -396,10 +396,82 @@ export default function PresupuestoPrint({ data }: Props) {
           </div>
         </div>
 
+        {/* ── CONDICIONES ── */}
+        {(data.condicion === "anticipo" ||
+          data.condicion === "anticipo-modificable") && (
+          <div
+            style={{
+              marginTop: "24px",
+              border: `1px solid ${BLUE}`,
+              borderLeft: `4px solid ${ACCENT}`,
+              padding: "14px 22px",
+              display: "table",
+              width: "calc(100% - 48px)",
+              backgroundColor: BLUE_MID,
+              borderRadius: "0 4px 4px 0",
+            }}
+          >
+            <div
+              style={{
+                display: "table-cell",
+                verticalAlign: "middle",
+                width: "46px",
+                paddingRight: "14px",
+              }}
+            >
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  backgroundColor: BLUE_DARK,
+                  border: `2px solid ${ACCENT}`,
+                  textAlign: "center",
+                  lineHeight: "28px",
+                  color: ACCENT,
+                  fontSize: "16px",
+                  fontWeight: 900,
+                }}
+              >
+                $
+              </div>
+            </div>
+            <div style={{ display: "table-cell", verticalAlign: "middle" }}>
+              <div
+                style={{
+                  fontWeight: 800,
+                  fontSize: "16px",
+                  letterSpacing: "3px",
+                  color: ACCENT,
+                  marginBottom: "4px",
+                }}
+              >
+                CONDICIONES DE PAGO
+              </div>
+              <div style={{ fontSize: "14px", color: "#6a9bbf" }}>
+                Para iniciar el trabajo se requiere el 50%. El saldo restante se
+                abona al finalizar el trabajo.
+              </div>
+              {data.condicion === "anticipo-modificable" && (
+                <div
+                  style={{
+                    fontSize: "14px",
+                    color: "#6a9bbf",
+                    marginTop: "6px",
+                  }}
+                >
+                  El presupuesto puede modificarse al abrir la caja en caso de
+                  encontrar daños adicionales.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── GARANTÍA ── */}
         <div
           style={{
-            marginTop: "24px",
+            marginTop: data.condicion === "default" ? "24px" : "12px",
             border: `1px solid ${BLUE}`,
             borderLeft: `4px solid ${NEON}`,
             padding: "14px 22px",

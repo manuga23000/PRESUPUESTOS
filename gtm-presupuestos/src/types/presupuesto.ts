@@ -5,6 +5,7 @@ export interface LineItem {
 }
 
 export type Moneda = "ARS" | "USD";
+export type Condicion = "default" | "anticipo" | "anticipo-modificable";
 
 export interface PresupuestoData {
   nombre: string;
@@ -12,6 +13,7 @@ export interface PresupuestoData {
   items: LineItem[];
   total: string;
   moneda: Moneda;
+  condicion: Condicion;
 }
 
 export interface PresupuestoGuardado extends PresupuestoData {

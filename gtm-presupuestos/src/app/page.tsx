@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import type {
+  Condicion,
   LineItem,
   PresupuestoData,
   PresupuestoGuardado,
@@ -39,6 +40,7 @@ const EMPTY_DATA: PresupuestoData = {
   items: [{ ...EMPTY_ITEM }],
   total: "",
   moneda: "ARS",
+  condicion: "default",
 };
 
 export default function PresupuestoPage() {
@@ -214,6 +216,7 @@ export default function PresupuestoPage() {
       items: p.items,
       total: p.total,
       moneda: p.moneda || "ARS",
+      condicion: p.condicion || "default",
     });
     setSaved(false);
     setShowPreview(false);
@@ -814,6 +817,59 @@ export default function PresupuestoPage() {
                         (e.target.style.borderColor = `${BLUE}55`)
                       }
                     />
+                  </div>
+
+                  <div style={{ marginBottom: "14px" }}>
+                    <label style={fieldLabelStyle}>CONDICIONES</label>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                      }}
+                    >
+                      {(
+                        [
+                          { value: "default", label: "SOLO GARANTÍA" },
+                          { value: "anticipo", label: "ANTICIPO 50%" },
+                          { value: "anticipo-modificable", label: "ANTICIPO 50% + MODIFICABLE" },
+                        ] as { value: Condicion; label: string }[]
+                      ).map(({ value, label }) => {
+                        const active = formData.condicion === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() =>
+                              setFormData((p) => ({ ...p, condicion: value }))
+                            }
+                            style={{
+                              padding: "8px 12px",
+                              fontSize: "11px",
+                              fontWeight: 800,
+                              letterSpacing: "2px",
+                              fontFamily: "var(--font-orbitron), sans-serif",
+                              cursor: "pointer",
+                              borderRadius: "3px",
+                              border: active
+                                ? `1px solid ${NEON}`
+                                : `1px solid ${BLUE}55`,
+                              background: active
+                                ? `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`
+                                : "transparent",
+                              color: active ? "#fff" : `${ACCENT}aa`,
+                              boxShadow: active
+                                ? `0 0 12px ${NEON}55`
+                                : "none",
+                              transition: "all 0.15s",
+                              textAlign: "left",
+                            }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div

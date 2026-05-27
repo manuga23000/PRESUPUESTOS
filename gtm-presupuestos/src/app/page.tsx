@@ -9,6 +9,7 @@ import type {
   LineItem,
   PresupuestoData,
   PresupuestoGuardado,
+  TipoPresupuesto,
 } from "@/types/presupuesto";
 import {
   guardarPresupuesto,
@@ -41,6 +42,7 @@ const EMPTY_DATA: PresupuestoData = {
   total: "",
   moneda: "ARS",
   condicion: "default",
+  tipo: "simple",
 };
 
 export default function PresupuestoPage() {
@@ -96,8 +98,8 @@ export default function PresupuestoPage() {
       const clone = original.cloneNode(true) as HTMLElement;
       clone.id = "print-clone";
       clone.style.transform = "none";
-      clone.style.width = "210mm";
-      clone.style.height = "297mm";
+      clone.style.width = "794px";
+      clone.style.height = "auto";
       clone.style.minHeight = "0";
       clone.style.position = "fixed";
       clone.style.left = "-9999px";
@@ -107,16 +109,36 @@ export default function PresupuestoPage() {
       const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#ffffff",
+        backgroundColor: "#0c1a2e",
       });
 
       clone.remove();
 
-      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pdfW = pdf.internal.pageSize.getWidth();
       const pdfH = pdf.internal.pageSize.getHeight();
-      pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
+
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const pageCanvasHeight = (canvasWidth / pdfW) * pdfH;
+      const totalPages = Math.ceil(canvasHeight / pageCanvasHeight);
+
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) pdf.addPage();
+
+        const srcY = page * pageCanvasHeight;
+        const srcH = Math.min(pageCanvasHeight, canvasHeight - srcY);
+
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = canvasWidth;
+        pageCanvas.height = srcH;
+        const ctx = pageCanvas.getContext("2d")!;
+        ctx.drawImage(canvas, 0, srcY, canvasWidth, srcH, 0, 0, canvasWidth, srcH);
+
+        const imgData = pageCanvas.toDataURL("image/png");
+        const imgH = (srcH / canvasWidth) * pdfW;
+        pdf.addImage(imgData, "PNG", 0, 0, pdfW, imgH);
+      }
 
       const fileName = formData.nombre
         ? `Presupuesto_${formData.nombre.replace(/\s+/g, "_")}.pdf`
@@ -149,6 +171,18 @@ export default function PresupuestoPage() {
     setSaved(false);
     setSaveError(null);
   }, [formData]);
+
+  useEffect(() => {
+    if (formData.tipo !== "detallado") return;
+    const sum = formData.items.reduce((acc, item) => {
+      const n = parseFloat(item.importe.replace(/\./g, "").replace(",", "."));
+      return acc + (isNaN(n) ? 0 : n);
+    }, 0);
+    const formatted = sum > 0 ? sum.toLocaleString("es-AR") : "";
+    if (formatted !== formData.total) {
+      setFormData((prev) => ({ ...prev, total: formatted }));
+    }
+  }, [formData.items, formData.tipo, formData.total]);
 
   const loadHistorial = useCallback(async () => {
     if (historialLoaded) return;
@@ -217,6 +251,7 @@ export default function PresupuestoPage() {
       total: p.total,
       moneda: p.moneda || "ARS",
       condicion: p.condicion || "default",
+      tipo: p.tipo || "simple",
     });
     setSaved(false);
     setShowPreview(false);
@@ -473,6 +508,52 @@ export default function PresupuestoPage() {
                     EDITAR MANUALMENTE
                   </div>
 
+                  <div style={{ marginBottom: "14px" }}>
+                    <label style={fieldLabelStyle}>TIPO DE PRESUPUESTO</label>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      {(
+                        [
+                          { value: "simple", label: "SIMPLE" },
+                          { value: "detallado", label: "DETALLADO" },
+                        ] as { value: TipoPresupuesto; label: string }[]
+                      ).map(({ value, label }) => {
+                        const active = formData.tipo === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() =>
+                              setFormData((p) => ({ ...p, tipo: value }))
+                            }
+                            style={{
+                              flex: 1,
+                              padding: "8px 12px",
+                              fontSize: "12px",
+                              fontWeight: 800,
+                              letterSpacing: "2px",
+                              fontFamily: "var(--font-orbitron), sans-serif",
+                              cursor: "pointer",
+                              borderRadius: "3px",
+                              border: active
+                                ? `1px solid ${NEON}`
+                                : `1px solid ${BLUE}55`,
+                              background: active
+                                ? `linear-gradient(135deg, ${BLUE_DARK}, ${BLUE})`
+                                : "transparent",
+                              color: active ? "#fff" : `${ACCENT}aa`,
+                              boxShadow: active
+                                ? `0 0 12px ${NEON}55`
+                                : "none",
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div
                     style={{
                       display: "flex",
@@ -518,13 +599,18 @@ export default function PresupuestoPage() {
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "70px 1fr 28px",
+                            gridTemplateColumns: formData.tipo === "detallado"
+                              ? "60px 1fr 90px 28px"
+                              : "70px 1fr 28px",
                             gap: "4px",
                             marginBottom: "6px",
                           }}
                         >
                           <span style={fieldLabelStyle}>CANT.</span>
                           <span style={fieldLabelStyle}>DESCRIPCIÓN</span>
+                          {formData.tipo === "detallado" && (
+                            <span style={fieldLabelStyle}>IMPORTE</span>
+                          )}
                           <span />
                         </div>
                         {formData.items.map((item, i) => (
@@ -532,7 +618,9 @@ export default function PresupuestoPage() {
                             key={i}
                             style={{
                               display: "grid",
-                              gridTemplateColumns: "70px 1fr 28px",
+                              gridTemplateColumns: formData.tipo === "detallado"
+                                ? "60px 1fr 90px 28px"
+                                : "70px 1fr 28px",
                               gap: "4px",
                               marginBottom: "4px",
                             }}
@@ -579,6 +667,29 @@ export default function PresupuestoPage() {
                                 (e.target.style.borderColor = `${BLUE}55`)
                               }
                             />
+                            {formData.tipo === "detallado" && (
+                              <input
+                                value={item.importe}
+                                onChange={(e) =>
+                                  updateItem(i, "importe", e.target.value)
+                                }
+                                placeholder="0"
+                                style={{
+                                  ...inputStyle,
+                                  fontFamily: "var(--font-orbitron), monospace",
+                                  textAlign: "right",
+                                  padding: "6px 6px",
+                                  color: NEON,
+                                  fontSize: "13px",
+                                }}
+                                onFocus={(e) =>
+                                  (e.target.style.borderColor = NEON)
+                                }
+                                onBlur={(e) =>
+                                  (e.target.style.borderColor = `${BLUE}55`)
+                                }
+                              />
+                            )}
                             <button
                               onClick={() => removeItem(i)}
                               style={{
@@ -683,12 +794,19 @@ export default function PresupuestoPage() {
                     </div>
                     <label style={fieldLabelStyle}>
                       {formData.moneda === "USD" ? "TOTAL USD" : "TOTAL $"}
+                      {formData.tipo === "detallado" && (
+                        <span style={{ color: `${ACCENT}88`, marginLeft: "8px", letterSpacing: "1px" }}>
+                          (auto)
+                        </span>
+                      )}
                     </label>
                     <input
                       value={formData.total}
                       onChange={(e) =>
+                        formData.tipo !== "detallado" &&
                         setFormData((p) => ({ ...p, total: e.target.value }))
                       }
+                      readOnly={formData.tipo === "detallado"}
                       placeholder="0"
                       style={{
                         ...inputStyle,
@@ -697,6 +815,8 @@ export default function PresupuestoPage() {
                         color: NEON,
                         fontWeight: 700,
                         textAlign: "right",
+                        opacity: formData.tipo === "detallado" ? 0.7 : 1,
+                        cursor: formData.tipo === "detallado" ? "default" : undefined,
                       }}
                       onFocus={(e) => (e.target.style.borderColor = NEON)}
                       onBlur={(e) =>

@@ -32,6 +32,7 @@ export async function listarPresupuestos(): Promise<PresupuestoGuardado[]> {
       total: data.total,
       moneda: data.moneda === "USD" ? "USD" : "ARS",
       condicion: data.condicion || "default",
+      tipo: data.tipo || "simple",
       creadoEn: (data.creadoEn as Timestamp).toDate(),
     };
   });

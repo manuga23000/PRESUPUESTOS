@@ -50,6 +50,7 @@ const circlesSvg = `data:image/svg+xml,${encodeURIComponent(
 
 export default function PresupuestoPrint({ data }: Props) {
   const today = getTodayStr();
+  const isDetallado = data.tipo === "detallado";
   const rows = [...data.items];
   while (rows.length < MIN_ROWS) {
     rows.push({ cantidad: "", descripcion: "", importe: "" });
@@ -61,6 +62,7 @@ export default function PresupuestoPrint({ data }: Props) {
       style={{
         width: "794px",
         minHeight: "1123px",
+        paddingBottom: "40px",
         backgroundColor: BLUE_DEEP,
         color: "#e2f0ff",
         fontFamily: "var(--font-rajdhani), 'Arial', sans-serif",
@@ -304,6 +306,11 @@ export default function PresupuestoPrint({ data }: Props) {
                 CANT.
               </th>
               <th style={{ ...thStyle, textAlign: "center" }}>DESCRIPCIÓN</th>
+              {isDetallado && (
+                <th style={{ ...thStyle, width: "140px", textAlign: "right" }}>
+                  IMPORTE
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -339,6 +346,24 @@ export default function PresupuestoPrint({ data }: Props) {
                 >
                   {item.descripcion}
                 </td>
+                {isDetallado && (
+                  <td
+                    style={{
+                      ...tdStyle,
+                      textAlign: "right",
+                      fontFamily: "var(--font-orbitron), sans-serif",
+                      fontWeight: item.importe ? 700 : 400,
+                      color: item.importe ? NEON : "#2a4a6a",
+                      paddingRight: "20px",
+                    }}
+                  >
+                    {item.importe
+                      ? data.moneda === "USD"
+                        ? `${formatImporte(item.importe)} usd`
+                        : `$ ${formatImporte(item.importe)}`
+                      : ""}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

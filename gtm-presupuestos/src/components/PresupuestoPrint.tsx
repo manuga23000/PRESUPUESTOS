@@ -28,6 +28,7 @@ function getTodayStr(): string {
   });
 }
 
+const MAX_ROWS = 10;
 const MIN_ROWS = 7;
 
 // ── SVG data-URI backgrounds ──
@@ -51,18 +52,56 @@ const circlesSvg = `data:image/svg+xml,${encodeURIComponent(
 export default function PresupuestoPrint({ data }: Props) {
   const today = getTodayStr();
   const isDetallado = data.tipo === "detallado";
-  const rows = [...data.items];
+  const hasCondiciones =
+    data.condicion === "anticipo" || data.condicion === "anticipo-modificable";
+
+  const realItems = data.items.slice(0, MAX_ROWS);
+  const rows = [...realItems];
   while (rows.length < MIN_ROWS) {
     rows.push({ cantidad: "", descripcion: "", importe: "" });
   }
+
+  const compact = rows.length > MIN_ROWS;
+
+  const s = {
+    contentPad: compact ? "22px 44px 20px" : "32px 44px 36px",
+    headerMb: compact ? "18px" : "28px",
+    logoH: compact ? "110px" : "140px",
+    titleSize: compact ? "34px" : "40px",
+    dividerMb: compact ? "16px" : "24px",
+    clientMb: compact ? "16px" : "26px",
+    clientPad: compact ? "10px 18px" : "14px 18px",
+    clientValueSize: compact ? "18px" : "22px",
+    thPad: compact ? "9px 16px" : "13px 16px",
+    tdPad: compact ? "6px 14px" : "11px 16px",
+    tdSize: compact ? "16px" : "20px",
+    tdHeight: compact ? "32px" : "44px",
+    tdLine: compact ? "18px" : "22px",
+    totalPad: compact ? "14px 24px" : "20px 32px",
+    totalValPad: compact ? "14px 20px" : "20px 24px",
+    totalSize: compact ? "26px" : "32px",
+    condMt: compact ? "14px" : "24px",
+    condPad: compact ? "10px 18px" : "14px 22px",
+    condTitleSize: compact ? "14px" : "16px",
+    condTextSize: compact ? "12px" : "14px",
+    condIconSize: compact ? "26px" : "32px",
+    condIconWrap: compact ? "36px" : "46px",
+    warMt: compact
+      ? "8px"
+      : hasCondiciones
+        ? "12px"
+        : "24px",
+    footerMt: compact ? "16px" : "32px",
+    footerPt: compact ? "10px" : "16px",
+    footerValSize: compact ? "15px" : "17px",
+  };
 
   return (
     <div
       id="print-area"
       style={{
         width: "794px",
-        minHeight: "1123px",
-        paddingBottom: "40px",
+        height: "1123px",
         backgroundColor: BLUE_DEEP,
         color: "#e2f0ff",
         fontFamily: "var(--font-rajdhani), 'Arial', sans-serif",
@@ -72,7 +111,7 @@ export default function PresupuestoPrint({ data }: Props) {
         WebkitPrintColorAdjust: "exact",
       }}
     >
-      {/* GRID PATTERN — CSS background-image en vez de SVG inline */}
+      {/* GRID PATTERN */}
       <div
         style={{
           position: "absolute",
@@ -131,7 +170,7 @@ export default function PresupuestoPrint({ data }: Props) {
         }}
       />
 
-      {/* TOP ACCENT BAR — neon line */}
+      {/* TOP ACCENT BAR */}
       <div
         style={{
           height: "4px",
@@ -141,21 +180,18 @@ export default function PresupuestoPrint({ data }: Props) {
         }}
       />
 
-      <div
-        style={{ position: "relative", zIndex: 1, padding: "32px 44px 36px" }}
-      >
+      <div style={{ position: "relative", zIndex: 1, padding: s.contentPad }}>
         {/* ── HEADER ── */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "28px",
+            marginBottom: s.headerMb,
           }}
         >
           {/* Logo */}
           <div style={{ position: "relative" }}>
-            {/* Glow behind logo */}
             <div
               style={{
                 position: "absolute",
@@ -169,7 +205,7 @@ export default function PresupuestoPrint({ data }: Props) {
               src="/presupuestos/LOGO NEGRO.png"
               alt="GTM"
               style={{
-                height: "140px",
+                height: s.logoH,
                 width: "auto",
                 display: "block",
                 position: "relative",
@@ -226,7 +262,7 @@ export default function PresupuestoPrint({ data }: Props) {
             </div>
             <div
               style={{
-                fontSize: "40px",
+                fontSize: s.titleSize,
                 fontWeight: 900,
                 letterSpacing: "4px",
                 color: "#ffffff",
@@ -269,7 +305,7 @@ export default function PresupuestoPrint({ data }: Props) {
           style={{
             height: "1px",
             background: `linear-gradient(90deg, ${NEON} 0%, ${BLUE} 40%, transparent 100%)`,
-            marginBottom: "24px",
+            marginBottom: s.dividerMb,
             boxShadow: `0 0 8px ${NEON}44`,
           }}
         />
@@ -281,19 +317,33 @@ export default function PresupuestoPrint({ data }: Props) {
             width: "100%",
             borderSpacing: "14px 0",
             marginLeft: "-14px",
-            marginBottom: "26px",
+            marginBottom: s.clientMb,
           }}
         >
           <div style={{ display: "table-cell", width: "50%" }}>
-            <div style={fieldBox}>
+            <div
+              style={{
+                ...fieldBox,
+                padding: s.clientPad,
+              }}
+            >
               <div style={fieldLabel}>NOMBRE DEL CLIENTE</div>
-              <div style={fieldValue}>{data.nombre || "—"}</div>
+              <div style={{ ...fieldValue, fontSize: s.clientValueSize }}>
+                {data.nombre || "—"}
+              </div>
             </div>
           </div>
           <div style={{ display: "table-cell", width: "50%" }}>
-            <div style={fieldBox}>
+            <div
+              style={{
+                ...fieldBox,
+                padding: s.clientPad,
+              }}
+            >
               <div style={fieldLabel}>VEHÍCULO</div>
-              <div style={fieldValue}>{data.vehiculo || "—"}</div>
+              <div style={{ ...fieldValue, fontSize: s.clientValueSize }}>
+                {data.vehiculo || "—"}
+              </div>
             </div>
           </div>
         </div>
@@ -302,12 +352,28 @@ export default function PresupuestoPrint({ data }: Props) {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, width: "90px", textAlign: "center" }}>
+              <th
+                style={{
+                  ...thStyle,
+                  padding: s.thPad,
+                  width: "90px",
+                  textAlign: "center",
+                }}
+              >
                 CANT.
               </th>
-              <th style={{ ...thStyle, textAlign: "center" }}>DESCRIPCIÓN</th>
+              <th style={{ ...thStyle, padding: s.thPad, textAlign: "center" }}>
+                DESCRIPCIÓN
+              </th>
               {isDetallado && (
-                <th style={{ ...thStyle, width: "140px", textAlign: "right" }}>
+                <th
+                  style={{
+                    ...thStyle,
+                    padding: s.thPad,
+                    width: "140px",
+                    textAlign: "right",
+                  }}
+                >
                   IMPORTE
                 </th>
               )}
@@ -327,7 +393,12 @@ export default function PresupuestoPrint({ data }: Props) {
               >
                 <td
                   style={{
-                    ...tdStyle,
+                    padding: s.tdPad,
+                    fontSize: s.tdSize,
+                    borderBottom: `1px solid ${BLUE}22`,
+                    height: s.tdHeight,
+                    lineHeight: s.tdLine,
+                    verticalAlign: "middle",
                     textAlign: "center",
                     fontFamily: "var(--font-orbitron), sans-serif",
                     fontWeight: item.cantidad ? 700 : 400,
@@ -338,7 +409,12 @@ export default function PresupuestoPrint({ data }: Props) {
                 </td>
                 <td
                   style={{
-                    ...tdStyle,
+                    padding: s.tdPad,
+                    fontSize: s.tdSize,
+                    borderBottom: `1px solid ${BLUE}22`,
+                    height: s.tdHeight,
+                    lineHeight: s.tdLine,
+                    verticalAlign: "middle",
                     textAlign: "center",
                     fontWeight: item.descripcion ? 600 : 400,
                     color: item.descripcion ? "#e2f0ff" : "#1a3050",
@@ -349,7 +425,12 @@ export default function PresupuestoPrint({ data }: Props) {
                 {isDetallado && (
                   <td
                     style={{
-                      ...tdStyle,
+                      padding: s.tdPad,
+                      fontSize: s.tdSize,
+                      borderBottom: `1px solid ${BLUE}22`,
+                      height: s.tdHeight,
+                      lineHeight: s.tdLine,
+                      verticalAlign: "middle",
                       textAlign: "right",
                       fontFamily: "var(--font-orbitron), sans-serif",
                       fontWeight: item.importe ? 700 : 400,
@@ -379,7 +460,7 @@ export default function PresupuestoPrint({ data }: Props) {
           <div
             style={{
               display: "inline-table",
-              minWidth: "360px",
+              minWidth: compact ? "300px" : "360px",
               border: `2px solid ${BLUE}`,
               borderSpacing: 0,
             }}
@@ -388,13 +469,13 @@ export default function PresupuestoPrint({ data }: Props) {
               <div
                 style={{
                   display: "table-cell",
-                  fontSize: "14px",
+                  fontSize: compact ? "12px" : "14px",
                   fontWeight: 700,
                   letterSpacing: "5px",
                   color: ACCENT,
                   fontFamily: "var(--font-orbitron), sans-serif",
                   backgroundColor: BLUE_MID,
-                  padding: "20px 32px",
+                  padding: s.totalPad,
                   verticalAlign: "middle",
                 }}
               >
@@ -403,12 +484,12 @@ export default function PresupuestoPrint({ data }: Props) {
               <div
                 style={{
                   display: "table-cell",
-                  fontSize: "32px",
+                  fontSize: s.totalSize,
                   fontWeight: 700,
                   fontFamily: "var(--font-orbitron), sans-serif",
                   color: "#ffffff",
                   backgroundColor: BLUE_DARK,
-                  padding: "20px 24px",
+                  padding: s.totalValPad,
                   verticalAlign: "middle",
                   borderLeft: `2px solid ${BLUE}`,
                 }}
@@ -422,14 +503,13 @@ export default function PresupuestoPrint({ data }: Props) {
         </div>
 
         {/* ── CONDICIONES ── */}
-        {(data.condicion === "anticipo" ||
-          data.condicion === "anticipo-modificable") && (
+        {hasCondiciones && (
           <div
             style={{
-              marginTop: "24px",
+              marginTop: s.condMt,
               border: `1px solid ${BLUE}`,
               borderLeft: `4px solid ${ACCENT}`,
-              padding: "14px 22px",
+              padding: s.condPad,
               display: "table",
               width: "calc(100% - 48px)",
               backgroundColor: BLUE_MID,
@@ -440,21 +520,21 @@ export default function PresupuestoPrint({ data }: Props) {
               style={{
                 display: "table-cell",
                 verticalAlign: "middle",
-                width: "46px",
-                paddingRight: "14px",
+                width: s.condIconWrap,
+                paddingRight: compact ? "10px" : "14px",
               }}
             >
               <div
                 style={{
-                  width: "32px",
-                  height: "32px",
+                  width: s.condIconSize,
+                  height: s.condIconSize,
                   borderRadius: "50%",
                   backgroundColor: BLUE_DARK,
                   border: `2px solid ${ACCENT}`,
                   textAlign: "center",
-                  lineHeight: "28px",
+                  lineHeight: compact ? "22px" : "28px",
                   color: ACCENT,
-                  fontSize: "16px",
+                  fontSize: compact ? "14px" : "16px",
                   fontWeight: 900,
                 }}
               >
@@ -465,24 +545,24 @@ export default function PresupuestoPrint({ data }: Props) {
               <div
                 style={{
                   fontWeight: 800,
-                  fontSize: "16px",
+                  fontSize: s.condTitleSize,
                   letterSpacing: "3px",
                   color: ACCENT,
-                  marginBottom: "4px",
+                  marginBottom: "3px",
                 }}
               >
                 CONDICIONES DE PAGO
               </div>
-              <div style={{ fontSize: "14px", color: "#6a9bbf" }}>
+              <div style={{ fontSize: s.condTextSize, color: "#6a9bbf" }}>
                 Para iniciar el trabajo se requiere el 50%. El saldo restante se
                 abona al finalizar el trabajo.
               </div>
               {data.condicion === "anticipo-modificable" && (
                 <div
                   style={{
-                    fontSize: "14px",
+                    fontSize: s.condTextSize,
                     color: "#6a9bbf",
-                    marginTop: "6px",
+                    marginTop: "4px",
                   }}
                 >
                   El presupuesto puede modificarse al abrir la caja en caso de
@@ -496,10 +576,10 @@ export default function PresupuestoPrint({ data }: Props) {
         {/* ── GARANTÍA ── */}
         <div
           style={{
-            marginTop: data.condicion === "default" ? "24px" : "12px",
+            marginTop: s.warMt,
             border: `1px solid ${BLUE}`,
             borderLeft: `4px solid ${NEON}`,
-            padding: "14px 22px",
+            padding: s.condPad,
             display: "table",
             width: "calc(100% - 48px)",
             backgroundColor: BLUE_MID,
@@ -510,21 +590,21 @@ export default function PresupuestoPrint({ data }: Props) {
             style={{
               display: "table-cell",
               verticalAlign: "middle",
-              width: "46px",
-              paddingRight: "14px",
+              width: s.condIconWrap,
+              paddingRight: compact ? "10px" : "14px",
             }}
           >
             <div
               style={{
-                width: "32px",
-                height: "32px",
+                width: s.condIconSize,
+                height: s.condIconSize,
                 borderRadius: "50%",
                 backgroundColor: BLUE_DARK,
                 border: `2px solid ${NEON}`,
                 textAlign: "center",
-                lineHeight: "28px",
+                lineHeight: compact ? "22px" : "28px",
                 color: NEON,
-                fontSize: "18px",
+                fontSize: compact ? "16px" : "18px",
                 fontWeight: 900,
               }}
             >
@@ -535,15 +615,15 @@ export default function PresupuestoPrint({ data }: Props) {
             <div
               style={{
                 fontWeight: 800,
-                fontSize: "16px",
+                fontSize: s.condTitleSize,
                 letterSpacing: "3px",
                 color: NEON,
-                marginBottom: "4px",
+                marginBottom: "3px",
               }}
             >
               GARANTÍA INCLUIDA
             </div>
-            <div style={{ fontSize: "14px", color: "#6a9bbf" }}>
+            <div style={{ fontSize: s.condTextSize, color: "#6a9bbf" }}>
               Este presupuesto incluye garantía de 6 meses.
             </div>
           </div>
@@ -552,8 +632,8 @@ export default function PresupuestoPrint({ data }: Props) {
         {/* ── FOOTER ── */}
         <div
           style={{
-            marginTop: "32px",
-            paddingTop: "16px",
+            marginTop: s.footerMt,
+            paddingTop: s.footerPt,
             borderTop: `1px solid ${BLUE}33`,
             display: "table",
             width: "100%",
@@ -561,15 +641,21 @@ export default function PresupuestoPrint({ data }: Props) {
         >
           <div style={{ display: "table-cell", textAlign: "center" }}>
             <div style={footerLabel}>DIRECCIÓN</div>
-            <div style={footerValue}>Viale 291, San Nicolás</div>
+            <div style={{ ...footerValue, fontSize: s.footerValSize }}>
+              Viale 291, San Nicolás
+            </div>
           </div>
           <div style={{ display: "table-cell", textAlign: "center" }}>
             <div style={footerLabel}>TELÉFONO</div>
-            <div style={footerValue}>3364 694921</div>
+            <div style={{ ...footerValue, fontSize: s.footerValSize }}>
+              3364 694921
+            </div>
           </div>
           <div style={{ display: "table-cell", textAlign: "center" }}>
             <div style={footerLabel}>WEB</div>
-            <div style={footerValue}>mecanicagrandoli.com.ar</div>
+            <div style={{ ...footerValue, fontSize: s.footerValSize }}>
+              mecanicagrandoli.com.ar
+            </div>
           </div>
         </div>
       </div>
@@ -626,15 +712,6 @@ const thStyle: React.CSSProperties = {
   borderBottom: `2px solid ${NEON}`,
   textTransform: "uppercase",
   lineHeight: 1.3,
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: "11px 16px",
-  fontSize: "20px",
-  borderBottom: `1px solid ${BLUE}22`,
-  height: "44px",
-  lineHeight: "22px",
-  verticalAlign: "middle",
 };
 
 const footerLabel: React.CSSProperties = {

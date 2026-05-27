@@ -99,7 +99,7 @@ export default function PresupuestoPage() {
       clone.id = "print-clone";
       clone.style.transform = "none";
       clone.style.width = "794px";
-      clone.style.height = "auto";
+      clone.style.height = "1123px";
       clone.style.minHeight = "0";
       clone.style.position = "fixed";
       clone.style.left = "-9999px";
@@ -114,31 +114,11 @@ export default function PresupuestoPage() {
 
       clone.remove();
 
+      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pdfW = pdf.internal.pageSize.getWidth();
       const pdfH = pdf.internal.pageSize.getHeight();
-
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const pageCanvasHeight = (canvasWidth / pdfW) * pdfH;
-      const totalPages = Math.ceil(canvasHeight / pageCanvasHeight);
-
-      for (let page = 0; page < totalPages; page++) {
-        if (page > 0) pdf.addPage();
-
-        const srcY = page * pageCanvasHeight;
-        const srcH = Math.min(pageCanvasHeight, canvasHeight - srcY);
-
-        const pageCanvas = document.createElement("canvas");
-        pageCanvas.width = canvasWidth;
-        pageCanvas.height = srcH;
-        const ctx = pageCanvas.getContext("2d")!;
-        ctx.drawImage(canvas, 0, srcY, canvasWidth, srcH, 0, 0, canvasWidth, srcH);
-
-        const imgData = pageCanvas.toDataURL("image/png");
-        const imgH = (srcH / canvasWidth) * pdfW;
-        pdf.addImage(imgData, "PNG", 0, 0, pdfW, imgH);
-      }
+      pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
 
       const fileName = formData.nombre
         ? `Presupuesto_${formData.nombre.replace(/\s+/g, "_")}.pdf`
@@ -216,6 +196,7 @@ export default function PresupuestoPage() {
   };
 
   const addItem = () => {
+    if (formData.items.length >= 10) return;
     setFormData((prev) => ({
       ...prev,
       items: [...prev.items, { ...EMPTY_ITEM }],
@@ -720,12 +701,13 @@ export default function PresupuestoPage() {
 
                   <button
                     onClick={addItem}
+                    disabled={formData.items.length >= 10}
                     style={{
                       backgroundColor: "transparent",
-                      border: `1px dashed ${BLUE}66`,
+                      border: `1px dashed ${formData.items.length >= 10 ? `${BLUE}33` : `${BLUE}66`}`,
                       borderRadius: "4px",
-                      color: `${ACCENT}bb`,
-                      cursor: "pointer",
+                      color: formData.items.length >= 10 ? `${BLUE}44` : `${ACCENT}bb`,
+                      cursor: formData.items.length >= 10 ? "default" : "pointer",
                       fontSize: "12px",
                       fontWeight: 700,
                       letterSpacing: "2px",
@@ -736,15 +718,17 @@ export default function PresupuestoPage() {
                       textTransform: "uppercase",
                     }}
                     onMouseEnter={(e) => {
+                      if (formData.items.length >= 10) return;
                       e.currentTarget.style.borderColor = NEON;
                       e.currentTarget.style.color = NEON;
                     }}
                     onMouseLeave={(e) => {
+                      if (formData.items.length >= 10) return;
                       e.currentTarget.style.borderColor = `${BLUE}66`;
                       e.currentTarget.style.color = `${ACCENT}bb`;
                     }}
                   >
-                    + agregar fila
+                    {formData.items.length >= 10 ? "MÁXIMO 10 ÍTEMS" : "+ agregar fila"}
                   </button>
 
                   <div style={{ marginBottom: "14px" }}>

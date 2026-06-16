@@ -196,7 +196,7 @@ export default function PresupuestoPage() {
   };
 
   const addItem = () => {
-    if (formData.items.length >= 10) return;
+    if (formData.items.length >= 7) return;
     setFormData((prev) => ({
       ...prev,
       items: [...prev.items, { ...EMPTY_ITEM }],
@@ -701,13 +701,13 @@ export default function PresupuestoPage() {
 
                   <button
                     onClick={addItem}
-                    disabled={formData.items.length >= 10}
+                    disabled={formData.items.length >= 7}
                     style={{
                       backgroundColor: "transparent",
-                      border: `1px dashed ${formData.items.length >= 10 ? `${BLUE}33` : `${BLUE}66`}`,
+                      border: `1px dashed ${formData.items.length >= 7 ? `${BLUE}33` : `${BLUE}66`}`,
                       borderRadius: "4px",
-                      color: formData.items.length >= 10 ? `${BLUE}44` : `${ACCENT}bb`,
-                      cursor: formData.items.length >= 10 ? "default" : "pointer",
+                      color: formData.items.length >= 7 ? `${BLUE}44` : `${ACCENT}bb`,
+                      cursor: formData.items.length >= 7 ? "default" : "pointer",
                       fontSize: "12px",
                       fontWeight: 700,
                       letterSpacing: "2px",
@@ -718,17 +718,17 @@ export default function PresupuestoPage() {
                       textTransform: "uppercase",
                     }}
                     onMouseEnter={(e) => {
-                      if (formData.items.length >= 10) return;
+                      if (formData.items.length >= 7) return;
                       e.currentTarget.style.borderColor = NEON;
                       e.currentTarget.style.color = NEON;
                     }}
                     onMouseLeave={(e) => {
-                      if (formData.items.length >= 10) return;
+                      if (formData.items.length >= 7) return;
                       e.currentTarget.style.borderColor = `${BLUE}66`;
                       e.currentTarget.style.color = `${ACCENT}bb`;
                     }}
                   >
-                    {formData.items.length >= 10 ? "MÁXIMO 10 ÍTEMS" : "+ agregar fila"}
+                    {formData.items.length >= 7 ? "MÁXIMO 7 ÍTEMS" : "+ agregar fila"}
                   </button>
 
                   <div style={{ marginBottom: "14px" }}>

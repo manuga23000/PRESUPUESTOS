@@ -28,7 +28,7 @@ function getTodayStr(): string {
   });
 }
 
-const MAX_ROWS = 10;
+const MAX_ROWS = 7;
 const MIN_ROWS = 7;
 
 // ── SVG data-URI backgrounds ──

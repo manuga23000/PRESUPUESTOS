@@ -114,11 +114,12 @@ export default function PresupuestoPage() {
 
       clone.remove();
 
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      // JPEG en lugar de PNG: el PNG de una página completa a scale 2 pesaba ~10 MB
+      const imgData = canvas.toDataURL("image/jpeg", 0.85);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
       const pdfW = pdf.internal.pageSize.getWidth();
       const pdfH = pdf.internal.pageSize.getHeight();
-      pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
 
       const fileName = formData.nombre
         ? `Presupuesto_${formData.nombre.replace(/\s+/g, "_")}.pdf`
